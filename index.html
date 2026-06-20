@@ -6,127 +6,141 @@
 <title>Media Link Manager</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f13;color:#e0e0e0;min-height:100vh}
-.container{max-width:1280px;margin:0 auto;padding:16px}
-.header{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);padding:24px;border-radius:12px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-.header h1{font-size:22px;display:flex;align-items:center;gap:8px}
-.header h1 span{color:#e94560}
-.subtitle{font-size:13px;opacity:.6;margin-top:4px}
-.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh}
+.container{max-width:1280px;margin:0 auto;padding:20px}
+.header{border-bottom:1px solid #e5e7eb;padding:20px 0;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.header h1{font-size:20px;font-weight:700;display:flex;align-items:center;gap:6px}
+.header h1 span{color:#C0392B}
+.subtitle{font-size:13px;color:#666;margin-top:2px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
 .search-wrap{flex:1;min-width:200px;position:relative}
-.search-wrap input{width:100%;padding:10px 14px 10px 36px;border:1px solid #2a2a3e;border-radius:8px;background:#1a1a2e;color:#e0e0e0;font-size:14px;outline:none;transition:border-color .2s}
-.search-wrap input:focus{border-color:#e94560}
-.search-wrap .icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.4;font-size:14px}
+.search-wrap input{width:100%;padding:9px 14px 9px 34px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#1a1a1a;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.search-wrap input:focus{border-color:#C0392B;box-shadow:0 0 0 2px rgba(192,57,43,.12)}
+.search-wrap .icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.4}
 .filter-group{display:flex;gap:8px;flex-wrap:wrap}
-.filter-group select{padding:9px 12px;border:1px solid #2a2a3e;border-radius:8px;background:#1a1a2e;color:#e0e0e0;font-size:13px;outline:none;cursor:pointer}
-.filter-group select:focus{border-color:#e94560}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;white-space:nowrap}
-.btn-primary{background:#e94560;color:#fff}
-.btn-primary:hover{background:#d63851;transform:translateY(-1px)}
-.btn-success{background:#2ecc71;color:#fff}
-.btn-success:hover{background:#27ae60}
-.btn-warning{background:#f39c12;color:#fff}
-.btn-warning:hover{background:#e67e22}
-.btn-danger{background:#e74c3c;color:#fff;padding:9px 12px}
-.btn-danger:hover{background:#c0392b}
+.filter-group select{padding:8px 10px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#1a1a1a;font-size:13px;outline:none;cursor:pointer;transition:border-color .2s}
+.filter-group select:focus{border-color:#C0392B;box-shadow:0 0 0 2px rgba(192,57,43,.12)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:4px;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;text-decoration:none;white-space:nowrap;color:#fff}
+.btn-primary{background:#C0392B}
+.btn-primary:hover{background:#a93226}
+.btn-success{background:#16a34a}
+.btn-success:hover{background:#15803d}
+.btn-warning{background:#d97706}
+.btn-warning:hover{background:#b45309}
+.btn-danger{background:#dc2626;padding:8px 10px}
+.btn-danger:hover{background:#b91c1c}
 .btn-danger:disabled{opacity:.4;cursor:not-allowed}
-.btn-sm{padding:6px 12px;font-size:12px}
-.btn-outline{background:transparent;border:1px solid #2a2a3e;color:#e0e0e0}
-.btn-outline:hover{background:#2a2a3e}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-outline{background:#fff;border:1px solid #d1d5db;color:#1a1a1a}
+.btn-outline:hover{background:#f3f4f6}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
-.stat-card{background:#1a1a2e;border-radius:10px;padding:16px;text-align:center;border:1px solid #2a2a3e}
-.stat-num{font-size:24px;font-weight:700;color:#e94560}
-.stat-label{font-size:12px;opacity:.6;margin-top:4px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.card{background:#1a1a2e;border-radius:12px;overflow:hidden;border:1px solid #2a2a3e;transition:all .25s;display:flex;flex-direction:column}
-.card:hover{border-color:#e94560;transform:translateY(-3px);box-shadow:0 8px 24px rgba(233,69,96,.15)}
-.card-img{width:100%;height:190px;object-fit:cover;background:#2a2a3e;display:flex;align-items:center;justify-content:center;font-size:40px;color:#555}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:16px;text-align:center}
+.stat-num{font-size:24px;font-weight:700;color:#C0392B}
+.stat-label{font-size:12px;color:#666;margin-top:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:4px;overflow:hidden;transition:all .2s;display:flex;flex-direction:column}
+.card:hover{border-color:#d1d5db;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.card-img{width:100%;height:190px;object-fit:cover;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:40px;color:#9ca3af}
 .card-body{padding:14px;flex:1;display:flex;flex-direction:column}
-.card-title{font-size:15px;font-weight:600;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.card-year{color:#888;font-size:12px;margin-bottom:8px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
+.card-year{color:#666;font-size:12px;margin-bottom:8px}
 .card-badges{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
-.badge{padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
-.badge-2160p{background:#9b59b6;color:#fff}
-.badge-1080p{background:#2ecc71;color:#fff}
-.badge-720p{background:#3498db;color:#fff}
-.badge-codec{background:#2a2a3e;color:#ccc}
-.badge-size{background:#f39c12;color:#fff}
-.badge-audio{background:#1abc9c;color:#fff}
-.card-overview{font-size:12px;color:#888;line-height:1.4;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;flex:1}
+.badge{padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.02em}
+.badge-2160p{background:#7c3aed;color:#fff}
+.badge-1080p{background:#16a34a;color:#fff}
+.badge-720p{background:#2563eb;color:#fff}
+.badge-codec{background:#e5e7eb;color:#374151}
+.badge-size{background:#d97706;color:#fff}
+.badge-audio{background:#0891b2;color:#fff}
+.card-overview{font-size:12px;color:#666;line-height:1.4;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;flex:1}
 .card-actions{display:flex;gap:6px;margin-top:auto}
 .card-actions a{flex:1;text-align:center;text-decoration:none}
-.empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;color:#555}
+.empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;color:#9ca3af}
 .empty-state .big{font-size:48px;margin-bottom:12px}
-.empty-state h3{font-size:18px;margin-bottom:6px;color:#888}
+.empty-state h3{font-size:18px;margin-bottom:6px;color:#666}
 .empty-state p{font-size:13px}
-.modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);overflow-y:auto;padding:20px}
+.modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.4);overflow-y:auto;padding:20px}
 .modal.active{display:block}
-.modal-content{background:#1a1a2e;margin:20px auto;padding:24px;border-radius:12px;max-width:560px;border:1px solid #2a2a3e;position:relative}
-.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-.modal-header h2{font-size:18px}
-.close{font-size:24px;cursor:pointer;opacity:.5;transition:opacity .2s;background:none;border:none;color:#fff}
-.close:hover{opacity:1}
+.modal-content{background:#fff;margin:40px auto;padding:28px;border-radius:4px;max-width:560px;position:relative}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.modal-header h2{font-size:18px;font-weight:700}
+.close{font-size:24px;cursor:pointer;opacity:.4;transition:opacity .2s;background:none;border:none;color:#1a1a1a;padding:0;line-height:1}
+.close:hover{opacity:.7}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-group{margin-bottom:14px}
-.form-group label{display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#aaa}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:1px solid #2a2a3e;border-radius:6px;background:#0f0f13;color:#e0e0e0;font-size:13px;outline:none;transition:border-color .2s;font-family:inherit}
-.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#e94560}
+.form-group label{display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#374151}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#1a1a1a;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#C0392B;box-shadow:0 0 0 2px rgba(192,57,43,.12)}
 .form-group textarea{resize:vertical;min-height:60px}
 .form-actions{display:flex;gap:10px;margin-top:16px}
 .form-actions button{flex:1}
-.tmdb-result{border:1px solid #2a2a3e;border-radius:8px;padding:10px 14px;margin-bottom:6px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px}
-.tmdb-result:hover{border-color:#e94560;background:rgba(233,69,96,.08)}
-.tmdb-result img{width:40px;height:60px;object-fit:cover;border-radius:4px;background:#2a2a3e}
+.tmdb-result{border:1px solid #e5e7eb;border-radius:4px;padding:10px 14px;margin-bottom:6px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px}
+.tmdb-result:hover{border-color:#d1d5db;background:#f9fafb}
+.tmdb-result img{width:40px;height:60px;object-fit:cover;border-radius:2px;background:#f3f4f6}
 .tmdb-result .info{flex:1}
 .tmdb-result .info .title{font-weight:600;font-size:14px}
-.tmdb-result .info .meta{font-size:12px;color:#888;margin-top:2px}
-.tmdb-result .info .rating{color:#f39c12;font-size:12px}
-.tmdb-selected{background:rgba(46,204,113,.1);border-color:#2ecc71;padding:12px;border-radius:8px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
-.tmdb-selected img{width:40px;height:60px;object-fit:cover;border-radius:4px}
+.tmdb-result .info .meta{font-size:12px;color:#666;margin-top:2px}
+.tmdb-result .info .rating{color:#d97706;font-size:12px}
+.tmdb-selected{background:#f0fdf4;border:1px solid #22c55e;padding:12px;border-radius:4px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.tmdb-selected img{width:40px;height:60px;object-fit:cover;border-radius:2px}
 .bulk-area{margin-top:14px}
-.bulk-area textarea{width:100%;min-height:120px;padding:10px 12px;border:1px solid #2a2a3e;border-radius:6px;background:#0f0f13;color:#e0e0e0;font-size:12px;outline:none;resize:vertical;font-family:monospace}
-.bulk-area textarea:focus{border-color:#e94560}
-.pagination{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:24px;padding:12px 0}
-.pagination button{padding:8px 14px;border:1px solid #2a2a3e;border-radius:6px;background:#1a1a2e;color:#e0e0e0;cursor:pointer;font-size:13px;transition:all .2s}
-.pagination button:hover{border-color:#e94560}
-.pagination button:disabled{opacity:.3;cursor:not-allowed}
-.pagination .page-info{font-size:13px;color:#888}
-.toast{position:fixed;bottom:24px;right:24px;background:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;padding:12px 20px;font-size:13px;z-index:9999;opacity:0;transform:translateY(20px);transition:all .3s;pointer-events:none}
+.bulk-area textarea{width:100%;min-height:120px;padding:10px 12px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#1a1a1a;font-size:12px;outline:none;resize:vertical;font-family:monospace}
+.bulk-area textarea:focus{border-color:#C0392B;box-shadow:0 0 0 2px rgba(192,57,43,.12)}
+.pagination{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:24px;padding:12px 0}
+.pagination button{padding:6px 12px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#1a1a1a;cursor:pointer;font-size:13px;transition:all .15s}
+.pagination button:hover{border-color:#C0392B;color:#C0392B}
+.pagination button:disabled{opacity:.3;cursor:not-allowed;border-color:#e5e7eb;color:#9ca3af}
+.pagination .page-info{font-size:13px;color:#666}
+.toast{position:fixed;bottom:24px;right:24px;background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:12px 20px;font-size:13px;z-index:9999;opacity:0;transform:translateY(20px);transition:all .3s;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.08);color:#1a1a1a}
 .toast.show{opacity:1;transform:translateY(0)}
-.toast.success{border-color:#2ecc71}
-.toast.error{border-color:#e74c3c}
-.toast.info{border-color:#3498db}
-#loading-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,15,19,.8);z-index:9998;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.toast.success{border-left:3px solid #16a34a}
+.toast.error{border-left:3px solid #dc2626}
+.toast.info{border-left:3px solid #2563eb}
+#loading-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,.85);z-index:9998;align-items:center;justify-content:center;flex-direction:column;gap:12px}
 #loading-overlay.active{display:flex}
-.spinner{width:36px;height:36px;border:3px solid #2a2a3e;border-top-color:#e94560;border-radius:50%;animation:spin .8s linear infinite}
+.spinner{width:28px;height:28px;border:2px solid #e5e7eb;border-top-color:#C0392B;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.card-grouped{border:1px solid #2a2a3e;border-radius:12px;background:#1a1a2e;overflow:hidden}
-.card-grouped:hover{border-color:#e94560}
-.group-header{display:flex;gap:12px;padding:14px;cursor:pointer;align-items:center}
-.group-header img{width:50px;height:70px;object-fit:cover;border-radius:6px;background:#2a2a3e}
+.card-grouped{border:1px solid #e5e7eb;border-radius:4px;background:#fff;overflow:hidden}
+.card-grouped:hover{border-color:#d1d5db}
+.group-header{display:flex;gap:12px;padding:14px;cursor:pointer;align-items:center;user-select:none}
+.group-header img{width:50px;height:70px;object-fit:cover;border-radius:2px;background:#f3f4f6}
 .group-info{flex:1;min-width:0}
 .group-info h3{font-size:15px;font-weight:600}
-.group-info .group-meta{font-size:12px;color:#888;margin-top:4px}
-.group-count{font-size:12px;color:#e94560;font-weight:600;white-space:nowrap}
-.group-expand{font-size:18px;opacity:.5;transition:transform .3s;margin-left:8px}
+.group-info .group-meta{font-size:12px;color:#666;margin-top:3px}
+.group-count{font-size:12px;color:#C0392B;font-weight:600;white-space:nowrap}
+.btn-share{background:none;border:none;color:#6b7280;cursor:pointer;font-size:15px;padding:4px;opacity:.5;transition:opacity .2s;border-radius:3px;line-height:1}
+.btn-share:hover{opacity:1;color:#C0392B;background:rgba(192,57,43,.08)}
+.group-expand{font-size:16px;opacity:.35;transition:transform .3s;margin-left:4px}
 .group-expand.open{transform:rotate(180deg)}
-.group-variants{display:none;border-top:1px solid #2a2a3e}
+.group-variants{display:none;border-top:1px solid #e5e7eb}
 .group-variants.open{display:block}
-.variant{padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #1a1a2e;transition:background .2s}
+.variant{padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #f3f4f6;transition:background .15s}
 .variant:last-child{border-bottom:none}
-.variant:hover{background:rgba(233,69,96,.05)}
+.variant:hover{background:#fafafa}
 .variant .v-badges{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
-.variant .v-size{font-size:12px;color:#888;white-space:nowrap}
-.variant .v-link{text-decoration:none;padding:4px 12px;background:#2ecc71;color:#fff;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap}
-.variant .v-link:hover{background:#27ae60}
-.variant .v-del{background:none;border:none;color:#e74c3c;cursor:pointer;font-size:16px;padding:4px}
-.v-cb{width:16px;height:16px;accent-color:#e94560;cursor:pointer;flex-shrink:0;display:none}
+.variant .v-size{font-size:12px;color:#666;white-space:nowrap}
+.variant .v-link{text-decoration:none;padding:3px 10px;background:#16a34a;color:#fff;border-radius:3px;font-size:12px;font-weight:500;white-space:nowrap}
+.variant .v-link:hover{background:#15803d}
+.variant .v-del{background:none;border:none;color:#9ca3af;cursor:pointer;font-size:15px;padding:2px 4px;transition:color .15s}
+.variant .v-del:hover{color:#dc2626}
+.v-cb{width:15px;height:15px;accent-color:#C0392B;cursor:pointer;flex-shrink:0;display:none}
 .select-mode .v-cb{display:inline-block}
 .select-mode .v-link{pointer-events:none;opacity:.5}
+.admin-only{display:none!important}
+.admin .admin-only{display:inline-flex!important}
+body:not(.admin) .v-del{display:none!important}
+body:not(.admin) .v-cb{display:none!important}
+body:not(.admin) #selectBar{display:none!important}
+body:not(.admin) #selectBtn{display:none!important}
+body:not(.admin) [onclick*="deleteLink"]{display:none!important}
+#selectBar{background:#fff;border:1px solid #d1d5db;border-left:3px solid #C0392B;border-radius:4px;padding:10px 16px;margin-bottom:16px;align-items:center;gap:12px;flex-wrap:wrap}
+.btn-lock{background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;font-size:16px;padding:5px 8px;color:#9ca3af;transition:all .15s;line-height:1}
+.btn-lock:hover{border-color:#C0392B;color:#C0392B}
+.btn-lock.unlocked{color:#C0392B;border-color:#C0392B}
 @media(max-width:640px){
-.container{padding:10px}
-.header{padding:16px;flex-direction:column;text-align:center}
+.container{padding:12px}
+.header{padding:16px 0;flex-direction:column;text-align:center}
 .header h1{font-size:18px}
 .controls{flex-direction:column}
 .search-wrap{min-width:unset}
@@ -135,7 +149,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .grid{grid-template-columns:1fr}
 .form-row{grid-template-columns:1fr}
 .stats{grid-template-columns:1fr 1fr}
-.modal-content{margin:10px;padding:16px}
+.modal-content{margin:10px;padding:20px}
 }
 </style>
 </head>
@@ -143,33 +157,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <div id="loading-overlay">
   <div class="spinner"></div>
-  <span style="font-size:13px;color:#888">Loading...</span>
+  <span style="font-size:13px;color:#666">Loading...</span>
 </div>
 
 <div class="container">
   <div class="header">
     <div>
       <h1>🎬 <span>Link</span>Manager</h1>
-      <div class="subtitle">Browse, search & manage your media links</div>
+      <div class="subtitle">Browse, search & share your media links</div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-primary" onclick="openModal('addModal')">+ Add Link</button>
-      <button class="btn btn-outline" onclick="openModal('bulkModal')">📦 Bulk Import</button>
-      <button class="btn btn-success btn-sm" onclick="exportData()">📤 Export</button>
-      <button class="btn btn-warning btn-sm" onclick="document.getElementById('importFile').click()">📥 Import</button>
-      <button class="btn btn-outline btn-sm" onclick="toggleSelect()" id="selectBtn">☐ Select</button>
-      <button class="btn btn-outline btn-sm" onclick="openSettings()">⚙️</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-primary admin-only" onclick="openModal('addModal')">+ Add Link</button>
+      <button class="btn btn-outline admin-only" onclick="openModal('bulkModal')">📦 Bulk Import</button>
+      <button class="btn btn-success btn-sm admin-only" onclick="exportData()">📤 Export</button>
+      <button class="btn btn-warning btn-sm admin-only" onclick="document.getElementById('importFile').click()">📥 Import</button>
+      <button class="btn btn-outline btn-sm admin-only" onclick="toggleSelect()" id="selectBtn">☐ Select</button>
+      <button class="btn btn-outline btn-sm admin-only" onclick="openSettings()">⚙️</button>
+      <button class="btn-lock" id="lockBtn" onclick="toggleAdmin()" title="Admin access">🔒</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
     </div>
   </div>
 
-  <div id="selectBar" style="display:none;background:#1a1a2e;border:1px solid #e94560;border-radius:8px;padding:10px 16px;margin-bottom:12px;align-items:center;gap:12px;flex-wrap:wrap">
+  <div id="selectBar">
     <span id="selectCount" style="font-size:13px;font-weight:600">0 selected</span>
     <button class="btn btn-sm btn-outline" onclick="selectAll()">Select All</button>
     <button class="btn btn-sm btn-outline" onclick="selectNone()">Clear</button>
     <button class="btn btn-sm btn-danger" onclick="deleteSelected()" id="delSelBtn" disabled>🗑️ Delete Selected</button>
-  </div>
-    </div>
   </div>
 
   <div class="stats" id="stats">
@@ -334,18 +347,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
     <form id="settingsForm" onsubmit="saveConfig(event)">
       <div class="form-group">
-        <label>Apps Script Web App URL</label>
-        <input type="url" id="cfgApiUrl" required placeholder="https://script.google.com/macros/s/.../exec">
-        <div style="font-size:11px;color:#888;margin-top:4px">Deploy > New deployment > Web app</div>
-      </div>
-      <div class="form-group">
         <label>TMDB API Key (optional)</label>
         <input type="text" id="cfgTmdbKey" placeholder="Get yours free at themoviedb.org">
         <div style="font-size:11px;color:#888;margin-top:4px">Enables auto-fill of poster, overview, rating</div>
       </div>
-      <button type="button" class="btn btn-outline" style="width:100%;margin-bottom:12px" onclick="window.open(document.getElementById('cfgApiUrl').value,'_blank')">
-        🔑 Authorize Script (opens in new tab)
-      </button>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:12px;margin-bottom:12px;font-size:12px;color:#666">
+        Cloud URL is hardcoded. To authorize a new deployment, <a href="https://script.google.com/macros/s/AKfycbz5fNZCJECQoMPsv2QHS2-N17ELnFq0OxIl00XsvR2ny6MppKbSlxrT6KcvaO3wT2Qz/exec" target="_blank" style="color:#C0392B">click here</a>.
+      </div>
       <div class="form-actions">
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
@@ -365,6 +373,28 @@ let page = 1;
 let selectedTmdb = null;
 let selectMode = false;
 let selected = new Set();
+let admin = localStorage.getItem('cfg_admin') === 'true';
+const ADMIN_HASH = '93af62d6e0ac59149247a28e6bd575e4c0ed50cd2c3406445f7817bc809abc3a';
+
+async function toggleAdmin(){
+  if(admin){admin=false;localStorage.setItem('cfg_admin','false');applyAdmin();return}
+  const p=prompt('Enter admin password:');
+  if(!p)return;
+  const hash=await sha256(p);
+  if(hash===ADMIN_HASH){admin=true;localStorage.setItem('cfg_admin','true');applyAdmin();toast('🔓 Admin mode enabled','success')}
+  else toast('❌ Wrong password','error')
+}
+
+async function sha256(s){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function applyAdmin(){
+  document.body.classList.toggle('admin',admin);
+  document.getElementById('lockBtn').textContent=admin?'🔓':'🔒';
+  document.getElementById('lockBtn').classList.toggle('unlocked',admin);
+}
 
 function toast(msg, type){
   const t=document.getElementById('toast');
@@ -373,15 +403,14 @@ function toast(msg, type){
 }
 
 function loadConfig(){
-  API_URL=localStorage.getItem('cfg_apiUrl')||'https://script.google.com/macros/s/AKfycbz5fNZCJECQoMPsv2QHS2-N17ELnFq0OxIl00XsvR2ny6MppKbSlxrT6KcvaO3wT2Qz/exec';
+  API_URL='https://script.google.com/macros/s/AKfycbz5fNZCJECQoMPsv2QHS2-N17ELnFq0OxIl00XsvR2ny6MppKbSlxrT6KcvaO3wT2Qz/exec';
   TMDB_KEY=localStorage.getItem('cfg_tmdbKey')||'';
 }
 
 function saveConfig(e){
   e.preventDefault();
-  localStorage.setItem('cfg_apiUrl',document.getElementById('cfgApiUrl').value.trim());
   localStorage.setItem('cfg_tmdbKey',document.getElementById('cfgTmdbKey').value.trim());
-  loadConfig();
+  TMDB_KEY=localStorage.getItem('cfg_tmdbKey')||'';
   closeModal('settingsModal');
   toast('✅ Settings saved','success');
 }
@@ -405,7 +434,6 @@ document.querySelectorAll('.modal').forEach(m=>{
 });
 
 function openSettings(){
-  document.getElementById('cfgApiUrl').value=API_URL;
   document.getElementById('cfgTmdbKey').value=TMDB_KEY;
   openModal('settingsModal');
 }
@@ -434,33 +462,35 @@ function parseFilename(name){
   else if(epMatch&&epMatch.index<15&&!season){episode=epMatch[1];type='TV';}
 
   let title=name
-    .replace(/\[[\d.]+\s*(GB|MB)\]/g,'')
-    .replace(/\b(2160p|1080p|720p|576p|480p)\b/gi,'')
+    .replace(/\[[\d.]+\s*(GB|MB)\]\s*/g,'')
+    .replace(/\b(2160p|1080p|720p|576p|480p|4K)\b/gi,'')
     .replace(/\b(H\.?265|H\.?264|AV1|x265|x264|HEVC|AVC)\b/gi,'')
-    .replace(/\b(AAC|DDP\d*\.?\d*|AC3|EAC3|FLAC|DTS|TrueHD)\b/gi,'')
-    .replace(/\b(NF|AMZN|HULU|DSNP|iT|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
+    .replace(/\b(AAC|DDPA?\d*\.?\d*|AC3|EAC3|FLAC|DTS|TrueHD)\b/gi,'')
+    .replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
     .replace(/\b(DV|HDR10\+?|HDR|DolbyVision|HLG)\b/gi,'')
     .replace(/\bAtmos\b/gi,'')
     .replace(/\bMULTI\b/gi,'')
-    .replace(/\bWEB\b/gi,'')
-    .replace(/\bDL\b/gi,'')
+    .replace(/\bDUAL\b/gi,'')
+    .replace(/\bAUDIO\b/gi,'')
+    .replace(/\(.*?\)/g,'')
+    .replace(/\[.*?\]/g,'')
     .replace(/\b(19\d{2}|20\d{2})\b/g,'')
     .replace(/\bS(\d+)\s*E(\d+)\b/gi,'')
     .replace(/\bS(\d+)\b(?!\s*E)/gi,'')
     .replace(/\bSeason\s*(\d+)\b/gi,'')
     .replace(/\bE(\d+)\b/gi,'')
     .replace(/\bEpisode\s*(\d+)\b/gi,'')
-    .replace(/\[.*?\]/g,'')
-    .replace(/-[\w.]+\.(mkv|mp4|avi|mov)$/i,'')
+    .replace(/\b(10bit|8bit|REPACK|PROPER|iNTERNAL)\b/gi,'')
+    .replace(/\b(RIP|BY|for)\b/gi,'')
     .replace(/#\w+/g,'')
-    .replace(/\(.*?\)/g,'')
+    .replace(/-[\w.]+\s*\.\s*(mkv|mp4|avi|mov)\s*$/i,'')
+    .replace(/\s*-\s*[\w.]+\s*$/,'')
     .replace(/\./g,' ')
     .replace(/[_-]+/g,' ')
     .replace(/\s+/g,' ').trim()
     .replace(/\s+([,;:])/g,'$1')
-    .replace(/^\d+\s+/,'')
+    .replace(/^\d{1,2}\s+/,'')
     .replace(/\s+/g,' ').trim()
-    .replace(/\b[iI]\b/g,'')
     .replace(/\s+/g,' ').trim();
 
   const hdr=hdrMatch?hdrMatch[1].toUpperCase().replace('DOLBYVISION','DV'):'';
@@ -486,11 +516,33 @@ function parseFilename(name){
   };
 }
 
+const KEY_MAP={ID:'id',Title:'title',Year:'year',Resolution:'resolution','File Size':'size',Codec:'codec','Audio Codec':'audio',Source:'source','Download URL':'url','TMDB ID':'tmdbId','Poster URL':'poster',Overview:'overview',Genre:'genre',Rating:'rating','Date Added':'dateAdded',Watched:'watched',Notes:'notes',Type:'type',Season:'season',Episode:'episode'};
+
+function normalizeKeys(obj){
+  const n={};
+  Object.entries(obj).forEach(([k,v])=>{
+    const mapped=KEY_MAP[k];
+    if(mapped)n[mapped]=v;
+    else n[k]=v;
+  });
+  n.id=n.id||Date.now().toString(36);
+  return n;
+}
+
+function shareGroup(key){
+  const url=window.location.origin+window.location.pathname+'#'+key;
+  navigator.clipboard.writeText(url).then(()=>{
+    toast('🔗 Group link copied!','success');
+  }).catch(()=>{
+    toast('⚠️ Could not copy link','error');
+  });
+}
+
 async function init(){
   loadConfig();
   loading(true);
   const stored=localStorage.getItem('mlinks');
-  if(stored)links=JSON.parse(stored);
+  if(stored)try{links=JSON.parse(stored).map(normalizeKeys)}catch(e){links=[]}
 
   if(!API_URL){
     loading(false);
@@ -503,13 +555,14 @@ async function init(){
     const r=await fetch(API_URL+'?action=getAll');
     if(r.ok){
       const data=await r.json();
+      let loaded=null;
       if(data&&data.success===true&&data.data){
-        if(data.data.length>0){
-          links=data.data;
-          localStorage.setItem('mlinks',JSON.stringify(links));
-        }
+        loaded=data.data.length>0?data.data.map(normalizeKeys):null;
       }else if(data&&data.length>0&&data[0].title){
-        links=data;
+        loaded=data.map(normalizeKeys);
+      }
+      if(loaded&&loaded.length>0){
+        links=loaded;
         localStorage.setItem('mlinks',JSON.stringify(links));
       }
     }else{
@@ -529,6 +582,13 @@ async function init(){
   }
   loading(false);
   render();
+  applyAdmin();
+  // URL hash sharing
+  const hash=decodeURIComponent(window.location.hash.slice(1));
+  if(hash){
+    const input=document.getElementById('searchInput');
+    if(input){input.value=hash;input.dispatchEvent(new Event('input'))}
+  }
 }
 
 async function saveToSheet(link){
@@ -608,7 +668,7 @@ async function searchTMDB(){
     if(!results.length){div.innerHTML='<p style="color:#888;font-size:13px">No results found</p>';return}
     div.innerHTML=results.map(m=>`
       <div class="tmdb-result" onclick='selectTMDB(${JSON.stringify(m).replace(/'/g,"&#39;")})'>
-        <img src="${m.poster_path?'https://image.tmdb.org/t/p/w92'+m.poster_path:'https://via.placeholder.com/40x60/2a2a3e/666?text=N/A'}" alt="">
+        <img src="${m.poster_path?'https://image.tmdb.org/t/p/w92'+m.poster_path:'https://placehold.co/40x60/e5e7eb/666?text=N/A'}" alt="">
         <div class="info">
           <div class="title">${m.title||m.name}</div>
           <div class="meta">${(m.release_date||m.first_air_date||'').split('-')[0]||''} · ${m.media_type==='tv'?'TV':'Movie'}</div>
@@ -627,7 +687,7 @@ function selectTMDB(m){
   const sel=document.getElementById('tmdbSelected');
   sel.style.display='flex';
   sel.innerHTML=`
-    <img src="${m.poster_path?'https://image.tmdb.org/t/p/w92'+m.poster_path:'https://via.placeholder.com/40x60/2a2a3e/666?text=N/A'}" alt="">
+    <img src="${m.poster_path?'https://image.tmdb.org/t/p/w92'+m.poster_path:'https://placehold.co/40x60/e5e7eb/666?text=N/A'}" alt="">
     <div style="flex:1"><strong>${m.title||m.name}</strong><br><span style="font-size:12px;color:#888">TMDB: ${m.id} ⭐ ${(m.vote_average||0).toFixed(1)}</span></div>
     <button class="btn btn-danger btn-sm" onclick="clearTMDB()">✕</button>
   `;
@@ -772,7 +832,7 @@ function renderGrouped(items,grid){
     const first=items[0];
     const poster=posterMap[key];
     const overview=overviewMap[key];
-    const imgHtml=poster?`<img src="${poster}" alt="">`:`<div style="width:50px;height:70px;background:#2a2a3e;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px">🎬</div>`;
+    const imgHtml=poster?`<img src="${poster}" alt="">`:`<div style="width:50px;height:70px;background:#f3f4f6;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:20px">🎬</div>`;
     const groupKey=key.replace(/\s/g,'_');
     const count2160=items.filter(i=>(i.resolution||'').includes('2160')).length;
     const count1080=items.filter(i=>(i.resolution||'').includes('1080')).length;
@@ -787,6 +847,7 @@ function renderGrouped(items,grid){
             <div class="group-meta">${items.length} links${first.type==='TV'?' · Series':''}${first.type==='Collection'?' · Collection':''}${count2160?` · ${count2160} 4K`:''}${count1080?` · ${count1080} 1080p`:''}${count720?` · ${count720} 720p`:''}</div>
           </div>
           <div class="group-count">${items.length}</div>
+          <button class="btn-share" onclick="event.stopPropagation();shareGroup('${encodeURIComponent(key)}')" title="Share this group">🔗</button>
           <div class="group-expand" id="gexp_${groupKey}">▾</div>
         </div>
         <div class="group-variants" id="gvar_${groupKey}">
