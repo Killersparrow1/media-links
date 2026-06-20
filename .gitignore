@@ -1,3 +1,4 @@
 config.ini
 *.session
 last_id.txt
+venv/
