@@ -529,9 +529,11 @@ function parseFilename(name){
     type: type,
     season: season,
     episode: episode,
-    _groupKey: (title||'').toLowerCase().replace(/\s+/g,' ').trim()
+    _groupKey: gk(title)
   };
 }
+
+function gk(t){return(t||'').replace(/[▪•★☆◆◇▶►▸→♥●◎✦❖▪▫■□●○◎⚠️⭐🌟✨🔥💥🎬🎥📽️📺🖥💻⌨️🖱️🕹️🎮🎧📱]/g,'').replace(/\p{Extended_Pictographic}/gu,'').toLowerCase().replace(/\s+/g,' ').trim()}
 
 const KEY_MAP={ID:'id',Title:'title',Year:'year',Resolution:'resolution','File Size':'size',Codec:'codec','Audio Codec':'audio',Source:'source','Download URL':'url','TMDB ID':'tmdbId','Poster URL':'poster',Overview:'overview',Genre:'genre',Rating:'rating','Date Added':'dateAdded',Watched:'watched',Notes:'notes',Type:'type',Season:'season',Episode:'episode'};
 
@@ -560,7 +562,7 @@ function setGroupPoster(groupKey,rawKey){
   if(!url)return;
   let count=0;
   links.forEach(l=>{
-    const lk=l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim();
+    const lk=l._groupKey||gk(l.title);
     if(lk===rawKey){
       l.poster=url;
       count++;
@@ -678,7 +680,7 @@ async function submitLink(e){
     season: document.getElementById('fieldSeason').value.trim(),
     episode: document.getElementById('fieldEpisode').value.trim()
   };
-  link._groupKey=(link.title||'').toLowerCase().replace(/\s+/g,' ').trim();
+  link._groupKey=gk(link.title);
 
   const dup=links.find(l=>l.url===link.url);
   if(dup){toast('⚠️ Duplicate URL — already exists','error');return}
@@ -766,7 +768,7 @@ async function fillAllTMDB(){
   if(!key){toast('Add your TMDB key in Settings first','error');return}
   const groups={};
   links.forEach(l=>{
-    const gk=l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim();
+    const gk=l._groupKey||gk(l.title);
     if(!l.tmdbId&&(l.title||l.year)){
       if(!groups[gk])groups[gk]=[];
       groups[gk].push(l);
@@ -813,35 +815,38 @@ async function fillAllTMDB(){
 
 async function cleanAllTitles(){
   if(!admin){toast('Admin only','error');return}
-  let changed=0;
   const btn=document.getElementById('cleanTitlesBtn');
+  if(!btn)return;
   btn.disabled=true;
   btn.textContent='🧹 Cleaning...';
+  let changed=0,errors=0;
   for(const l of links){
-    const old=l.title;
-    let t=l.title||'';
-    t=t.replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
-     .replace(/\(.*?\)/g,'').replace(/\[.*?\]/g,'')
-     .replace(/\b(10bit|8bit|REPACK|PROPER|iNTERNAL)\b/gi,'')
-     .replace(/\b(RIP|BY|for)\b/gi,'').replace(/#\w+/g,'')
-     .replace(/[▪•★☆◆◇▶►▸→♥●◎✦❖▪▫■□●○◎⚠️⭐🌟✨🔥💥🎬🎥📽️📺🖥💻⌨️🖱️🕹️🎮🎧📱]/g,'')
-     .replace(/\p{Extended_Pictographic}/gu,'')
-     .replace(/\./g,' ').replace(/[_-]+/g,' ')
-     .replace(/\s+/g,' ').trim();
-    if(t!==old){
-      l.title=t;
-      l._groupKey=t.toLowerCase().replace(/\s+/g,' ').trim();
-      await deleteFromSheet(l.id);
-      await saveToSheet(l);
-      changed++;
-      btn.textContent=`🧹 ${changed}`;
-    }
+    try{
+      const old=l.title;
+      let t=l.title||'';
+      t=t.replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
+       .replace(/\(.*?\)/g,'').replace(/\[.*?\]/g,'')
+       .replace(/\b(10bit|8bit|REPACK|PROPER|iNTERNAL)\b/gi,'')
+       .replace(/\b(RIP|BY|for)\b/gi,'').replace(/#\w+/g,'')
+       .replace(/[▪•★☆◆◇▶►▸→♥●◎✦❖▪▫■□●○◎⚠️⭐🌟✨🔥💥🎬🎥📽️📺🖥💻⌨️🖱️🕹️🎮🎧📱]/g,'')
+       .replace(/\p{Extended_Pictographic}/gu,'')
+       .replace(/\./g,' ').replace(/[_-]+/g,' ')
+       .replace(/\s+/g,' ').trim();
+      if(t!==old){
+        l.title=t;
+        l._groupKey=gk(t);
+        await deleteFromSheet(l.id);
+        await saveToSheet(l);
+        changed++;
+        btn.textContent=`🧹 ${changed}`;
+      }
+    }catch(e){errors++}
   }
   localStorage.setItem('mlinks',JSON.stringify(links));
   btn.disabled=false;
   btn.textContent='🧹 Clean Titles';
   render();
-  toast(`✅ Cleaned ${changed} titles`,'success');
+  toast(`✅ Cleaned ${changed} titles${errors?` (${errors} errors)`:''}`,'success');
 }
 
 async function bulkImport(){
@@ -903,7 +908,7 @@ async function bulkImport(){
   if(TMDB_KEY&&synced>0){
     const groups={};
     newParsed.forEach(l=>{
-      const gk=l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim();
+      const gk=l._groupKey||gk(l.title);
       if(!l.tmdbId&&(l.title||l.year)){if(!groups[gk])groups[gk]=[];groups[gk].push(l)}
     });
     for(const [gk,items] of Object.entries(groups)){
@@ -991,7 +996,7 @@ function renderGrouped(items,grid){
   const posterMap={};
   const overviewMap={};
   items.forEach(l=>{
-    const key=l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim();
+    const key=l._groupKey||gk(l.title);
     if(!groups[key]){groups[key]=[];posterMap[key]='';overviewMap[key]=''}
     groups[key].push(l);
     if(l.poster&&!posterMap[key])posterMap[key]=l.poster;
@@ -1071,7 +1076,7 @@ function doMerge(fromGroupKey,fromRawKey){
   const sel=document.getElementById('msel_'+fromGroupKey);
   const targetKey=sel.value;
   if(!targetKey||targetKey===fromRawKey)return;
-  const targetItems=links.filter(l=>(l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim())===targetKey);
+  const targetItems=links.filter(l=>(l._groupKey||gk(l.title))===targetKey);
   if(!targetItems.length){toast('Target group not found','error');return}
   const targetTitle=targetItems[0].title||'';
   const targetYear=targetItems[0].year||'';
@@ -1079,7 +1084,7 @@ function doMerge(fromGroupKey,fromRawKey){
   let moved=0;
   const toSync=[];
   links.forEach(l=>{
-    const lk=l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim();
+    const lk=l._groupKey||gk(l.title);
     if(lk===fromRawKey){
       l.title=targetTitle;
       l.year=targetYear;
@@ -1217,7 +1222,7 @@ function deleteLink(id){
   if(link){
     const key=(link._groupKey||(link.title||'')).toLowerCase().replace(/\s+/g,' ').trim();
     const siblings=links.filter(l=>{
-      const lk=l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim();
+      const lk=l._groupKey||gk(l.title);
       return lk===key&&l.id!==id;
     });
     if(siblings.length){
