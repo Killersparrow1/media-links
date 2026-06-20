@@ -24,6 +24,18 @@ function getSheet_() {
     sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
     sheet.setFrozenRows(1);
     sheet.getRange('1:1').setFontWeight('bold');
+  } else {
+    const existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+    if (existingHeaders.length < HEADERS.length) {
+      const newHeaders = [];
+      for (let i = existingHeaders.length; i < HEADERS.length; i++) {
+        newHeaders.push(HEADERS[i]);
+      }
+      if (newHeaders.length > 0) {
+        sheet.getRange(1, existingHeaders.length + 1, 1, newHeaders.length).setValues([newHeaders]);
+        sheet.getRange('1:1').setFontWeight('bold');
+      }
+    }
   }
   return sheet;
 }
