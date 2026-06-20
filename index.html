@@ -322,15 +322,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
     <form id="settingsForm" onsubmit="saveConfig(event)">
       <div class="form-group">
-        <label>Apps Script Web App URL *</label>
+        <label>Apps Script Web App URL</label>
         <input type="url" id="cfgApiUrl" required placeholder="https://script.google.com/macros/s/.../exec">
-        <div style="font-size:11px;color:#888;margin-top:4px">From Deploy > New deployment > Web app</div>
+        <div style="font-size:11px;color:#888;margin-top:4px">Deploy > New deployment > Web app</div>
       </div>
       <div class="form-group">
         <label>TMDB API Key (optional)</label>
         <input type="text" id="cfgTmdbKey" placeholder="Get yours free at themoviedb.org">
         <div style="font-size:11px;color:#888;margin-top:4px">Enables auto-fill of poster, overview, rating</div>
       </div>
+      <button type="button" class="btn btn-outline" style="width:100%;margin-bottom:12px" onclick="window.open(document.getElementById('cfgApiUrl').value,'_blank')">
+        🔑 Authorize Script (opens in new tab)
+      </button>
       <div class="form-actions">
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
@@ -486,15 +489,21 @@ async function init(){
     const r=await fetch(API_URL+'?action=getAll');
     if(r.ok){
       const data=await r.json();
-      if(data&&data.length>0&&data[0].title){
+      if(data&&data.success===true&&data.data){
+        if(data.data.length>0){
+          links=data.data;
+          localStorage.setItem('mlinks',JSON.stringify(links));
+        }
+      }else if(data&&data.length>0&&data[0].title){
         links=data;
         localStorage.setItem('mlinks',JSON.stringify(links));
-      }else if(data&&data.data&&data.data.length>0){
-        links=data.data;
-        localStorage.setItem('mlinks',JSON.stringify(links));
       }
+    }else{
+      toast('⚠️ Cloud sync needs authorization — click ⚙️ and visit the link','error');
     }
-  }catch(e){console.log('Offline mode, using cache')}
+  }catch(e){
+    toast('⚠️ Cloud unreachable. Open Settings to authorize.','error');
+  }
   loading(false);
   render();
 }
@@ -519,7 +528,7 @@ async function deleteFromSheet(id){
   }catch(e){return false}
 }
 
-function submitLink(e){
+async function submitLink(e){
   e.preventDefault();
   const link={
     id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
@@ -544,16 +553,21 @@ function submitLink(e){
     episode: document.getElementById('fieldEpisode').value.trim()
   };
   link._groupKey=((link.title||'')+' '+(link.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+
+  const dup=links.find(l=>l.url===link.url);
+  if(dup){toast('⚠️ Duplicate URL — already exists','error');return}
+
   links.unshift(link);
   localStorage.setItem('mlinks',JSON.stringify(links));
-  saveToSheet(link);
+  const ok=await saveToSheet(link);
   render();
   closeModal('addModal');
   document.getElementById('addForm').reset();
   document.getElementById('tmdbResults').innerHTML='';
   document.getElementById('tmdbSelected').style.display='none';
   selectedTmdb=null;
-  toast('✅ Link added!','success');
+  if(!ok)toast('✅ Saved locally — cloud sync failed. Authorize the script in Settings','info');
+  else toast('✅ Link added!','success');
 }
 
 async function searchTMDB(){
