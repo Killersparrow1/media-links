@@ -820,32 +820,35 @@ function cleanAllTitles(){
   if(!btn)return;
   btn.disabled=true;
   btn.textContent='🧹 Cleaning...';
-  let changed=0,errors=0;
+  const changed=[];
   for(const l of links){
-    try{
-      const old=l.title;
-      let t=l.title||'';
-      t=t.replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
-       .replace(/\(.*?\)/g,'').replace(/\[.*?\]/g,'')
-       .replace(/\b(10bit|8bit|REPACK|PROPER|iNTERNAL)\b/gi,'')
-       .replace(/\b(RIP|BY|for)\b/gi,'').replace(/#\w+/g,'')
-       .replace(/[▪•★☆◆◇▶►▸→♥●◎✦❖▪▫■□●○◎⚠️⭐🌟✨🔥💥🎬🎥📽️📺🖥💻⌨️🖱️🕹️🎮🎧📱]/g,'')
-       .replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}]/gu,'')
-       .replace(/\./g,' ').replace(/[_-]+/g,' ')
-       .replace(/\s+/g,' ').trim();
-      if(t!==old){
-        l.title=t;
-        l._groupKey=gk(t);
-        changed++;
-        btn.textContent=`🧹 ${changed}`;
-      }
-    }catch(e){errors++}
+    const old=l.title;
+    let t=l.title||'';
+    t=t.replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
+     .replace(/\(.*?\)/g,'').replace(/\[.*?\]/g,'')
+     .replace(/\b(10bit|8bit|REPACK|PROPER|iNTERNAL)\b/gi,'')
+     .replace(/\b(RIP|BY|for)\b/gi,'').replace(/#\w+/g,'')
+     .replace(/[▪•★☆◆◇▶►▸→♥●◎✦❖▪▫■□●○◎⚠️⭐🌟✨🔥💥🎬🎥📽️📺🖥💻⌨️🖱️🕹️🎮🎧📱]/g,'')
+     .replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}]/gu,'')
+     .replace(/\./g,' ').replace(/[_-]+/g,' ')
+     .replace(/\s+/g,' ').trim();
+    if(t!==old){
+      l.title=t;
+      l._groupKey=gk(t);
+      changed.push(l);
+    }
   }
-  localStorage.setItem('mlinks',JSON.stringify(links));
-  btn.disabled=false;
-  btn.textContent='🧹 Clean Titles';
-  render();
-  toast(`✅ Cleaned ${changed} titles${errors?` (${errors} errors)`:''}`,'success');
+  if(!changed.length){btn.disabled=false;btn.textContent='🧹 Clean Titles';render();toast('All titles already clean','info');return}
+  btn.textContent=`🧹 Syncing ${changed.length}...`;
+  (async()=>{
+    await Promise.all(changed.map(l=>deleteFromSheet(l.id)));
+    await Promise.all(changed.map(l=>saveToSheet(l)));
+    localStorage.setItem('mlinks',JSON.stringify(links));
+    btn.disabled=false;
+    btn.textContent='🧹 Clean Titles';
+    render();
+    toast(`✅ Cleaned ${changed.length} titles (cloud synced)`,'success');
+  })();
 }
 
 async function bulkImport(){
