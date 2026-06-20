@@ -1134,7 +1134,7 @@ function updateStats(){
     const val=parseFloat(m[1]);
     return s+(m[2].toUpperCase()==='MB'?val/1024:val);
   },0);
-  document.getElementById('statSize').textContent=totalGB.toFixed(1)+' GB';
+  document.getElementById('statSize').textContent=totalGB>=1000?(totalGB/1000).toFixed(1)+' TB':totalGB.toFixed(1)+' GB';
   document.getElementById('statMovies').textContent=links.filter(l=>(l.type||'Movie')==='Movie').length+'/'+links.filter(l=>l.type==='TV').length;
   document.getElementById('statRes').textContent=links.filter(l=>(l.resolution||'').includes('2160')).length;
 }
