@@ -54,14 +54,14 @@ If you update `Code.gs` later (e.g., new columns), the URL stays the same:
 
 ```
 your-repo/
-├── docs/
-│   └── index.html
+├── index.html
 ├── Code.gs
+├── README.md
 └── SETUP.md
 ```
 
 3. Go to your repo **Settings > Pages**
-4. Under **Branch**, select `main` and folder `/docs`
+4. Under **Branch**, select `main` and folder `/` (root)
 5. Click **Save**
 6. Your site will be live at: `https://yourusername.github.io/media-links`
 
