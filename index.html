@@ -518,6 +518,15 @@ async function init(){
   }catch(e){
     toast('⚠️ Cloud unreachable. Open Settings to authorize.','error');
   }
+  // push any local-only items to cloud
+  if(API_URL&&links.length>0){
+    fetch(API_URL+'?action=getAll').then(r=>r.json()).then(d=>{
+      const cloudIds=new Set((d.data||[]).map(r=>r.ID||r.id));
+      links.forEach(l=>{
+        if(!cloudIds.has(l.id))saveToSheet(l);
+      });
+    }).catch(()=>{});
+  }
   loading(false);
   render();
 }
