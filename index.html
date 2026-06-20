@@ -143,6 +143,11 @@ body:not(.admin) #selectBar{display:none!important}
 body:not(.admin) #selectBtn{display:none!important}
 body:not(.admin) [onclick*="deleteLink"]{display:none!important}
 #selectBar{background:#fff;border:1px solid #d1d5db;border-left:3px solid #C0392B;border-radius:4px;padding:10px 16px;margin-bottom:16px;align-items:center;gap:12px;flex-wrap:wrap}
+.pill{display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600;letter-spacing:.01em}
+.pill-series{background:#e5e7eb;color:#374151}
+.pill-4k{background:#7c3aed;color:#fff}
+.pill-1080p{background:#16a34a;color:#fff}
+.pill-720p{background:#2563eb;color:#fff}
 .btn-lock{background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;font-size:16px;padding:5px 8px;color:#9ca3af;transition:all .15s;line-height:1}
 .btn-lock:hover{border-color:#C0392B;color:#C0392B}
 .btn-lock.unlocked{color:#C0392B;border-color:#C0392B}
@@ -930,7 +935,7 @@ function renderGrouped(items,grid){
           ${imgHtml}
           <div class="group-info">
             <h3>${first.title||'Unknown'}${first.year?` (${first.year})`:''}</h3>
-            <div class="group-meta">${items.length} links${first.type==='TV'?' ✦ Series':''}${first.type==='Collection'?' ✦ Collection':''}${count2160?` ✦ ${count2160} 4K`:''}${count1080?` ✦ ${count1080} 1080p`:''}${count720?` ✦ ${count720} 720p`:''}</div>
+            <div class="group-meta">${items.length} links${first.type==='TV'?` <span class="pill pill-series">Series</span>`:''}${first.type==='Collection'?` <span class="pill pill-series">Collection</span>`:''}${count2160?` <span class="pill pill-4k">${count2160}-4K</span>`:''}${count1080?` <span class="pill pill-1080p">${count1080}-1080p</span>`:''}${count720?` <span class="pill pill-720p">${count720}-720p</span>`:''}</div>
           </div>
           <div class="group-count">${items.length}</div>
           <button class="btn-share" onclick="event.stopPropagation();shareGroup('${encodeURIComponent(key)}')" title="Share this group">🔗</button>
@@ -1112,6 +1117,20 @@ function deleteSelected(){
 }
 
 function deleteLink(id){
+  const link=links.find(l=>l.id===id);
+  if(link){
+    const key=link._groupKey||((link.title||'')+' '+(link.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+    const siblings=links.filter(l=>{
+      const lk=l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+      return lk===key&&l.id!==id;
+    });
+    if(siblings.length){
+      const title=link.title||'Unknown';
+      const remaining=siblings.length;
+      const msg=`Delete this link? ${remaining} of ${remaining+1} for "${title}" will remain.`;
+      if(!confirm(msg))return;
+    }
+  }
   links=links.filter(l=>l.id!==id);
   localStorage.setItem('mlinks',JSON.stringify(links));
   deleteFromSheet(id);
