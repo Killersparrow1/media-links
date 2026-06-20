@@ -534,6 +534,7 @@ function parseFilename(name){
 }
 
 function gk(t){try{return(t||'').replace(/[▪•★☆◆◇▶►▸→♥●◎✦❖▪▫■□●○◎⚠️⭐🌟✨🔥💥🎬🎥📽️📺🖥💻⌨️🖱️🕹️🎮🎧📱]/g,'').replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}]/gu,'').toLowerCase().replace(/\s+/g,' ').trim()}catch(e){return(t||'').toLowerCase().replace(/\s+/g,' ').trim()}}
+function esc(s){try{return encodeURIComponent(s)}catch(e){return encodeURIComponent(s.replace(/[\uD800-\uDFFF]/g,''))}}
 
 const KEY_MAP={ID:'id',Title:'title',Year:'year',Resolution:'resolution','File Size':'size',Codec:'codec','Audio Codec':'audio',Source:'source','Download URL':'url','TMDB ID':'tmdbId','Poster URL':'poster',Overview:'overview',Genre:'genre',Rating:'rating','Date Added':'dateAdded',Watched:'watched',Notes:'notes',Type:'type',Season:'season',Episode:'episode'};
 
@@ -627,7 +628,7 @@ async function init(){
   render();
   applyAdmin();
   // URL hash sharing
-  const hash=decodeURIComponent(window.location.hash.slice(1));
+  const hash=(()=>{try{return decodeURIComponent(window.location.hash.slice(1))}catch(e){return ''}})();
   if(hash){
     const input=document.getElementById('searchInput');
     if(input){input.value=hash;input.dispatchEvent(new Event('input'))}
@@ -651,7 +652,7 @@ async function saveToSheet(link){
 async function deleteFromSheet(id){
   if(!admin||!API_URL)return false;
   try{
-    const r=await fetch(API_URL+'?action=delete&id='+encodeURIComponent(id));
+    const r=await fetch(API_URL+'?action=delete&id='+esc(id));
     return r.ok;
   }catch(e){return false}
 }
@@ -697,7 +698,7 @@ async function submitLink(e){
   if(!ok)toast('❌ Cloud sync failed — check ⚙️ settings','error');
   else{
     if(TMDB_KEY&&!link.tmdbId){
-      const q=encodeURIComponent((link.title||'')+' '+(link.year||''));
+      const q=esc((link.title||'')+' '+(link.year||''));
       try{
         const r=await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${q}`);
         const data=await r.json();
@@ -725,7 +726,7 @@ async function searchTMDB(){
   const key=TMDB_KEY||'';
   if(!key){toast('Add your TMDB key in Settings (⚙️)','info');return}
   try{
-    const r=await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${key}&query=${encodeURIComponent(q)}`);
+    const r=await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${key}&query=${esc(q)}`);
     const data=await r.json();
     const results=(data.results||[]).filter(r=>r.media_type==='movie'||r.media_type==='tv').slice(0,6);
     const div=document.getElementById('tmdbResults');
@@ -782,7 +783,7 @@ async function fillAllTMDB(){
   let done=0;
   for(const [gk,items] of entries){
     const first=items[0];
-    const q=encodeURIComponent((first.title||'')+' '+(first.year||''));
+        const q=esc((first.title||'')+' '+(first.year||''));
     try{
       const r=await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${key}&query=${q}`);
       const data=await r.json();
@@ -914,7 +915,7 @@ async function bulkImport(){
     for(const [gk,items] of Object.entries(groups)){
       const first=items[0];
       try{
-        const r=await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent((first.title||'')+' '+(first.year||''))}`);
+        const r=await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${esc((first.title||'')+' '+(first.year||''))}`);
         const data=await r.json();
         const res=(data.results||[]).find(r=>r.media_type==='movie'||r.media_type==='tv');
         if(res){
@@ -1030,7 +1031,7 @@ function renderGrouped(items,grid){
             <div class="group-meta">${items.length} links${first.type==='TV'?` <span class="pill pill-series">Series</span>`:''}${first.type==='Collection'?` <span class="pill pill-series">Collection</span>`:''}${count2160?` <span class="pill pill-4k">4K</span>`:''}${count1080?` <span class="pill pill-1080p">1080p</span>`:''}${count720?` <span class="pill pill-720p">720p</span>`:''}</div>
           </div>
           <div class="group-count">${items.length}</div>
-          <button class="btn-share" onclick="event.stopPropagation();shareGroup('${encodeURIComponent(key)}')" title="Share this group">🔗</button>
+          <button class="btn-share" onclick="event.stopPropagation();shareGroup('${esc(key)}')" title="Share this group">🔗</button>
           <button class="btn-poster admin-only" onclick="event.stopPropagation();setGroupPoster('${groupKey}','${key.replace(/"/g,'\\"')}')" title="Set poster URL">🖼</button>
           <button class="btn-merge admin-only" onclick="event.stopPropagation();toggleMerge('${groupKey}')" title="Merge into another group">⊕</button>
           <div class="group-expand" id="gexp_${groupKey}">▾</div>
