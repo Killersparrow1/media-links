@@ -737,8 +737,12 @@ async function bulkImport(){
     }
   }
   if(!parsed.length){toast('Could not parse any links. Check format.','error');return}
+  const existingUrls=new Set(links.map(l=>l.url));
+  const newParsed=parsed.filter(l=>!existingUrls.has(l.url));
+  const dupCount=parsed.length-newParsed.length;
+  if(!newParsed.length){toast(dupCount+' duplicate(s) found, nothing new to import','info');return}
   let synced=0;
-  for(const l of parsed){
+  for(const l of newParsed){
     l.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
     links.unshift(l);
     const ok=await saveToSheet(l);
@@ -748,8 +752,9 @@ async function bulkImport(){
   render();
   closeModal('bulkModal');
   document.getElementById('bulkText').value='';
-  const msg=synced===parsed.length?`✅ Imported ${parsed.length} links!`:`✅ ${parsed.length} imported (${synced} synced to cloud)`;
-  toast(msg,synced===parsed.length?'success':'info');
+  const cloudMsg=synced<newParsed.length?` (${synced} synced to cloud)`:'';
+  const dupMsg=dupCount?` (${dupCount} duplicates skipped)`:'';
+  toast(`✅ ${newParsed.length} imported${cloudMsg}${dupMsg}`,'success');
   }catch(e){toast('Import error: '+e.message,'error')}
 }
 
@@ -761,7 +766,7 @@ function render(){
   const type=document.getElementById('filterType').value;
 
   let filtered=links.filter(l=>{
-    const search=(l.title||'').toLowerCase()+' '+(l.overview||'').toLowerCase()+' '+(l.hdr||'').toLowerCase()+' '+(l.atmos||'').toLowerCase();
+    const search=(l.title||'').toLowerCase()+' '+(l.year||'')+' '+(l.overview||'').toLowerCase()+' '+(l.hdr||'').toLowerCase()+' '+(l.atmos||'').toLowerCase();
     return search.includes(q) && (!res||(l.resolution||'').includes(res)) && (!codec||(l.codec||'').includes(codec)) && (!type||(l.type||'')===type);
   });
 
@@ -958,7 +963,7 @@ function getFiltered(){
   const codec=document.getElementById('filterCodec').value;
   const type=document.getElementById('filterType').value;
   return links.filter(l=>{
-    const search=(l.title||'').toLowerCase()+' '+(l.overview||'').toLowerCase();
+    const search=(l.title||'').toLowerCase()+' '+(l.year||'')+' '+(l.overview||'').toLowerCase();
     return search.includes(q)&&(!res||(l.resolution||'').includes(res))&&(!codec||(l.codec||'').includes(codec))&&(!type||(l.type||'')===type);
   });
 }
