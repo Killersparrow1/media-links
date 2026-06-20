@@ -195,9 +195,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <option value="az">A-Z</option>
         <option value="za">Z-A</option>
       </select>
-      <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;color:#888">
-        <input type="checkbox" id="filterGroup" onchange="render()" style="accent-color:#e94560" checked> Group
-      </label>
+
     </div>
   </div>
 
@@ -668,7 +666,6 @@ function render(){
   const res=document.getElementById('filterResolution').value;
   const codec=document.getElementById('filterCodec').value;
   const sort=document.getElementById('filterSort').value;
-  const grouped=document.getElementById('filterGroup').checked;
   const type=document.getElementById('filterType').value;
 
   let filtered=links.filter(l=>{
@@ -690,11 +687,7 @@ function render(){
     return;
   }
 
-  if(grouped){
-    renderGrouped(filtered,grid);
-  }else{
-    renderFlat(filtered,grid);
-  }
+  renderGrouped(filtered,grid);
   updateStats();
   renderPagination(filtered.length);
 }
@@ -821,7 +814,7 @@ function renderPagination(total){
   const pages=Math.max(1,Math.ceil(total/PER_PAGE));
   if(page>pages)page=pages;
   const pg=document.getElementById('pagination');
-  if(pages<=1||document.getElementById('filterGroup').checked){pg.innerHTML='';return}
+  if(pages<=1){pg.innerHTML='';return}
   pg.innerHTML=`
     <button onclick="page=1;render()" ${page<=1?'disabled':''}>««</button>
     <button onclick="page=Math.max(1,page-1);render()" ${page<=1?'disabled':''}>«</button>
