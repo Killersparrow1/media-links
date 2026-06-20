@@ -111,6 +111,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,sans-s
 .group-count{font-size:12px;color:#C0392B;font-weight:600;white-space:nowrap}
 .btn-share{background:none;border:none;color:#6b7280;cursor:pointer;font-size:15px;padding:4px;opacity:.5;transition:opacity .2s;border-radius:3px;line-height:1}
 .btn-share:hover{opacity:1;color:#C0392B;background:rgba(192,57,43,.08)}
+.btn-merge{background:none;border:none;color:#6b7280;cursor:pointer;font-size:15px;padding:4px;opacity:.4;transition:opacity .2s;border-radius:3px;line-height:1}
+.btn-merge:hover{opacity:1;color:#16a34a;background:rgba(22,163,74,.1)}
+.merge-panel{display:none;padding:8px 14px;border-top:1px solid #e5e7eb;gap:8px;align-items:center}
+.merge-panel.open{display:flex}
+.merge-panel select{padding:4px 8px;border:1px solid #d1d5db;border-radius:3px;font-size:12px;flex:1;background:#fff;color:#1a1a1a;outline:none}
+.merge-panel select:focus{border-color:#C0392B}
 .group-expand{font-size:16px;opacity:.35;transition:transform .3s;margin-left:4px}
 .group-expand.open{transform:rotate(180deg)}
 .group-variants{display:none;border-top:1px solid #e5e7eb}
@@ -842,6 +848,9 @@ function renderGrouped(items,grid){
     const count2160=items.filter(i=>(i.resolution||'').includes('2160')).length;
     const count1080=items.filter(i=>(i.resolution||'').includes('1080')).length;
     const count720=items.filter(i=>(i.resolution||'').includes('720')).length;
+    const otherGroups=sorted.filter(([k])=>k!==key).map(([k])=>
+      `<option value="${k.replace(/"/g,'&quot;')}">${groups[k][0].title||'Unknown'}${groups[k][0].year?` (${groups[k][0].year})`:''}</option>`
+    ).join('');
 
     return `
       <div class="card-grouped">
@@ -853,7 +862,13 @@ function renderGrouped(items,grid){
           </div>
           <div class="group-count">${items.length}</div>
           <button class="btn-share" onclick="event.stopPropagation();shareGroup('${encodeURIComponent(key)}')" title="Share this group">🔗</button>
+          <button class="btn-merge admin-only" onclick="event.stopPropagation();toggleMerge('${groupKey}')" title="Merge into another group">⊕</button>
           <div class="group-expand" id="gexp_${groupKey}">▾</div>
+        </div>
+        <div class="merge-panel" id="mrg_${groupKey}">
+          <span style="font-size:12px;color:#666;white-space:nowrap">Merge into:</span>
+          <select id="msel_${groupKey}">${otherGroups||'<option value="">No other groups</option>'}</select>
+          <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();doMerge('${groupKey}','${key.replace(/"/g,'\\"')}')" ${otherGroups?'':'disabled'}>Merge</button>
         </div>
         <div class="group-variants" id="gvar_${groupKey}">
           ${items.map(l=>{
@@ -881,6 +896,34 @@ function toggleGroup(key){
   const e=document.getElementById('gexp_'+key);
   const open=v.classList.toggle('open');
   e.classList.toggle('open');
+}
+
+function toggleMerge(key){
+  document.getElementById('mrg_'+key).classList.toggle('open');
+}
+
+function doMerge(fromGroupKey,fromRawKey){
+  const sel=document.getElementById('msel_'+fromGroupKey);
+  const targetKey=sel.value;
+  if(!targetKey||targetKey===fromRawKey)return;
+  const targetItems=links.filter(l=>(l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim())===targetKey);
+  if(!targetItems.length){toast('Target group not found','error');return}
+  const targetTitle=targetItems[0].title||'';
+  const targetYear=targetItems[0].year||'';
+  const newGroupKey=((targetTitle||'')+' '+(targetYear||'')).toLowerCase().replace(/\s+/g,' ').trim();
+  let moved=0;
+  links.forEach(l=>{
+    const lk=l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+    if(lk===fromRawKey){
+      l.title=targetTitle;
+      l.year=targetYear;
+      l._groupKey=newGroupKey;
+      moved++;
+    }
+  });
+  localStorage.setItem('mlinks',JSON.stringify(links));
+  render();
+  toast(`✅ Merged ${moved} links into "${targetTitle}"`,'success');
 }
 
 function linkBadges(l){
