@@ -531,8 +531,9 @@ async function saveToSheet(link){
       body:JSON.stringify(link),
       headers:{'Content-Type':'text/plain'}
     });
-    const data=await r.json();
-    return data.success===true;
+    const text=await r.text();
+    try{const data=JSON.parse(text);return data.success!==false}
+    catch(e){return text.length>0}
   }catch(e){return false}
 }
 
