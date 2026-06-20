@@ -179,6 +179,7 @@ body:not(.admin) [onclick*="deleteLink"]{display:none!important}
       <button class="btn btn-warning btn-sm admin-only" onclick="document.getElementById('importFile').click()">📥 Import</button>
       <button class="btn btn-outline btn-sm admin-only" onclick="toggleSelect()" id="selectBtn">☐ Select</button>
       <button class="btn btn-outline btn-sm admin-only" onclick="openSettings()">⚙️</button>
+      <button class="btn btn-outline btn-sm admin-only" onclick="fillAllTMDB()" id="fillTmdbBtn">🖼 Fill TMDB</button>
       <button class="btn-lock" id="lockBtn" onclick="toggleAdmin()" title="Admin access">🔒</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
     </div>
@@ -703,6 +704,41 @@ function selectTMDB(m){
 function clearTMDB(){
   selectedTmdb=null;
   document.getElementById('tmdbSelected').style.display='none';
+}
+
+async function fillAllTMDB(){
+  const key=TMDB_KEY||'';
+  if(!key){toast('Add your TMDB key in Settings first','error');return}
+  const missing=links.filter(l=>!l.tmdbId);
+  if(!missing.length){toast('All links already have TMDB data','info');return}
+  const btn=document.getElementById('fillTmdbBtn');
+  btn.disabled=true;
+  btn.textContent='⏳ Filling...';
+  let done=0;
+  for(const l of missing){
+    const q=encodeURIComponent((l.title||'')+' '+(l.year||''));
+    try{
+      const r=await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${key}&query=${q}`);
+      const data=await r.json();
+      const res=(data.results||[]).find(r=>r.media_type==='movie'||r.media_type==='tv');
+      if(res){
+        l.tmdbId=res.id;
+        l.poster=res.poster_path?'https://image.tmdb.org/t/p/w500'+res.poster_path:'';
+        l.overview=res.overview||'';
+        l.genre=(res.genre_ids||[]).join(',');
+        l.rating=res.vote_average||'';
+        if(admin){await deleteFromSheet(l.id);await saveToSheet(l)}
+      }
+    }catch(e){}
+    done++;
+    btn.textContent=`⏳ ${done}/${missing.length}`;
+    await new Promise(r=>setTimeout(r,600));
+  }
+  localStorage.setItem('mlinks',JSON.stringify(links));
+  btn.disabled=false;
+  btn.textContent='🖼 Fill TMDB';
+  render();
+  toast(`✅ Filled TMDB data for ${done} links`,'success');
 }
 
 async function bulkImport(){
