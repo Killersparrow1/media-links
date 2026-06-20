@@ -153,7 +153,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button class="btn btn-outline" onclick="openModal('bulkModal')">📦 Bulk Import</button>
       <button class="btn btn-success btn-sm" onclick="exportData()">📤 Export</button>
       <button class="btn btn-warning btn-sm" onclick="document.getElementById('importFile').click()">📥 Import</button>
-      <button class="btn btn-outline btn-sm" onclick="openModal('settingsModal')">⚙️</button>
+      <button class="btn btn-outline btn-sm" onclick="openSettings()">⚙️</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
     </div>
   </div>
@@ -387,6 +387,12 @@ document.querySelectorAll('.modal').forEach(m=>{
   m.addEventListener('click',e=>{if(e.target===m){m.classList.remove('active');document.body.style.overflow=''}});
 });
 
+function openSettings(){
+  document.getElementById('cfgApiUrl').value=API_URL;
+  document.getElementById('cfgTmdbKey').value=TMDB_KEY;
+  openModal('settingsModal');
+}
+
 function parseFilename(name){
   const sizeMatch=name.match(/\[([\d.]+)\s*(GB|MB)\]/i);
   const resMatch=name.match(/\b(2160p|1080p|720p|576p|480p)\b/i);
@@ -472,7 +478,7 @@ async function init(){
   if(!API_URL){
     loading(false);
     render();
-    setTimeout(()=>openModal('settingsModal'),300);
+    setTimeout(()=>openSettings(),300);
     return;
   }
 
