@@ -709,36 +709,51 @@ function clearTMDB(){
 async function fillAllTMDB(){
   const key=TMDB_KEY||'';
   if(!key){toast('Add your TMDB key in Settings first','error');return}
-  const missing=links.filter(l=>!l.tmdbId);
-  if(!missing.length){toast('All links already have TMDB data','info');return}
+  const groups={};
+  links.forEach(l=>{
+    const gk=l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+    if(!l.tmdbId&&(l.title||l.year)){
+      if(!groups[gk])groups[gk]=[];
+      groups[gk].push(l);
+    }
+  });
+  const entries=Object.entries(groups);
+  if(!entries.length){toast('All links already have TMDB data','info');return}
   const btn=document.getElementById('fillTmdbBtn');
   btn.disabled=true;
   btn.textContent='⏳ Filling...';
   let done=0;
-  for(const l of missing){
-    const q=encodeURIComponent((l.title||'')+' '+(l.year||''));
+  for(const [gk,items] of entries){
+    const first=items[0];
+    const q=encodeURIComponent((first.title||'')+' '+(first.year||''));
     try{
       const r=await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${key}&query=${q}`);
       const data=await r.json();
       const res=(data.results||[]).find(r=>r.media_type==='movie'||r.media_type==='tv');
       if(res){
-        l.tmdbId=res.id;
-        l.poster=res.poster_path?'https://image.tmdb.org/t/p/w500'+res.poster_path:'';
-        l.overview=res.overview||'';
-        l.genre=(res.genre_ids||[]).join(',');
-        l.rating=res.vote_average||'';
-        if(admin){await deleteFromSheet(l.id);await saveToSheet(l)}
+        const poster=res.poster_path?'https://image.tmdb.org/t/p/w500'+res.poster_path:'';
+        const overview=res.overview||'';
+        const genre=(res.genre_ids||[]).join(',');
+        const rating=res.vote_average||'';
+        for(const l of items){
+          l.tmdbId=res.id;
+          l.poster=poster;
+          l.overview=overview;
+          l.genre=genre;
+          l.rating=rating;
+          if(admin){await deleteFromSheet(l.id);await saveToSheet(l)}
+        }
       }
     }catch(e){}
     done++;
-    btn.textContent=`⏳ ${done}/${missing.length}`;
+    btn.textContent=`⏳ ${done}/${entries.length}`;
     await new Promise(r=>setTimeout(r,600));
   }
   localStorage.setItem('mlinks',JSON.stringify(links));
   btn.disabled=false;
   btn.textContent='🖼 Fill TMDB';
   render();
-  toast(`✅ Filled TMDB data for ${done} links`,'success');
+  toast(`✅ Filled ${done} groups`,'success');
 }
 
 async function bulkImport(){
@@ -894,7 +909,7 @@ function renderGrouped(items,grid){
           ${imgHtml}
           <div class="group-info">
             <h3>${first.title||'Unknown'}${first.year?` (${first.year})`:''}</h3>
-            <div class="group-meta">${items.length} links${first.type==='TV'?' | Series':''}${first.type==='Collection'?' | Collection':''}${count2160?` | ${count2160} 4K`:''}${count1080?` | ${count1080} 1080p`:''}${count720?` | ${count720} 720p`:''}</div>
+            <div class="group-meta">${items.length} links${first.type==='TV'?' • Series':''}${first.type==='Collection'?' • Collection':''}${count2160?` • ${count2160} 4K`:''}${count1080?` • ${count1080} 1080p`:''}${count720?` • ${count720} 720p`:''}</div>
           </div>
           <div class="group-count">${items.length}</div>
           <button class="btn-share" onclick="event.stopPropagation();shareGroup('${encodeURIComponent(key)}')" title="Share this group">🔗</button>
