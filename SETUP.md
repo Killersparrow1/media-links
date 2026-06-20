@@ -33,6 +33,20 @@ GitHub Pages ──fetch()──► Google Apps Script ──► Google Sheets
 > ⚠️ If you see "Anyone with link" instead of "Anyone", choose that — same thing.
 > On first deploy, you may need to **Review permissions** and approve access to your own Google Sheet.
 
+> 💡 **The URL stays the same forever** as long as you deploy new versions under the same deployment ID (Deploy > Manage deployments > edit existing → New version). Don't create a new deployment — that gives a new URL.
+
+### Re-deploy After Updating Code.gs
+
+If you update `Code.gs` later (e.g., new columns), the URL stays the same:
+
+1. In Apps Script editor, paste the new `Code.gs`
+2. Click **Save**
+3. Click **Deploy > Manage deployments**
+4. Click the ✏️ pencil next to your existing deployment
+5. Click **New version** dropdown → pick a new version number
+6. Click **Deploy**
+7. The **URL does not change** — your frontend still works without any updates
+
 ## Step 3: Deploy to GitHub Pages
 
 1. Create a GitHub repository (e.g. `media-links`)
