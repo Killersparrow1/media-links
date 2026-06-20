@@ -100,6 +100,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #loading-overlay.active{display:flex}
 .spinner{width:36px;height:36px;border:3px solid #2a2a3e;border-top-color:#e94560;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.card-grouped{border:1px solid #2a2a3e;border-radius:12px;background:#1a1a2e;overflow:hidden}
+.card-grouped:hover{border-color:#e94560}
+.group-header{display:flex;gap:12px;padding:14px;cursor:pointer;align-items:center}
+.group-header img{width:50px;height:70px;object-fit:cover;border-radius:6px;background:#2a2a3e}
+.group-info{flex:1;min-width:0}
+.group-info h3{font-size:15px;font-weight:600}
+.group-info .group-meta{font-size:12px;color:#888;margin-top:4px}
+.group-count{font-size:12px;color:#e94560;font-weight:600;white-space:nowrap}
+.group-expand{font-size:18px;opacity:.5;transition:transform .3s;margin-left:8px}
+.group-expand.open{transform:rotate(180deg)}
+.group-variants{display:none;border-top:1px solid #2a2a3e}
+.group-variants.open{display:block}
+.variant{padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #1a1a2e;transition:background .2s}
+.variant:last-child{border-bottom:none}
+.variant:hover{background:rgba(233,69,96,.05)}
+.variant .v-badges{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
+.variant .v-size{font-size:12px;color:#888;white-space:nowrap}
+.variant .v-link{text-decoration:none;padding:4px 12px;background:#2ecc71;color:#fff;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap}
+.variant .v-link:hover{background:#27ae60}
+.variant .v-del{background:none;border:none;color:#e74c3c;cursor:pointer;font-size:16px;padding:4px}
 @media(max-width:640px){
 .container{padding:10px}
 .header{padding:16px;flex-direction:column;text-align:center}
@@ -169,6 +189,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <option value="az">A-Z</option>
         <option value="za">Z-A</option>
       </select>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;color:#888">
+        <input type="checkbox" id="filterGroup" onchange="render()" style="accent-color:#e94560"> Group
+      </label>
     </div>
   </div>
 
@@ -341,40 +364,59 @@ document.querySelectorAll('.modal').forEach(m=>{
 });
 
 function parseFilename(name){
-  const sizeMatch=name.match(/\[([\d.]+)\s*(GB|MB)\]/i)||name.match(/([\d.]+)\s*(GB|MB)/i);
-  const resMatch=name.match(/\b(2160p|1080p|720p)\b/i);
-  const codecMatch=name.match(/\b(H\.?265|H\.?264|AV1|x265|x264)\b/i);
-  const audioMatch=name.match(/\b(AAC|DDP\d*\.?\d*|AC3|EAC3|FLAC|DTS)\b/i);
+  const sizeMatch=name.match(/\[([\d.]+)\s*(GB|MB)\]/i);
+  const resMatch=name.match(/\b(2160p|1080p|720p|576p|480p)\b/i);
+  const codecMatch=name.match(/\b(H\.?265|H\.?264|AV1|x265|x264|HEVC|AVC)\b/i);
+  const audioMatch=name.match(/\b(AAC|DDP\d*\.?\d*|AC3|EAC3|FLAC|DTS|TrueHD)\b/i);
   const yearMatch=name.match(/\b(19\d{2}|20\d{2})\b/);
+  const hdrMatch=name.match(/\b(DV|HDR10\+?|HDR|DolbyVision|HLG)\b/i);
+  const atmosMatch=name.match(/\bAtmos\b/i);
+  const sourceMatch=name.match(/\b(NF|AMZN|HULU|DSNP|iT|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV|WEB)\b/i);
+  const groupMatch=name.match(/-([\w.]+)\.(mkv|mp4|avi|mov)$/i);
 
   let size='',sizeUnit='GB';
   if(sizeMatch){size=sizeMatch[1];sizeUnit=sizeMatch[2]||'GB';}
-  else if(name.match(/^\d+\.\d+/)){size=name.match(/^(\d+\.\d+)/)?.[1]||'';}
 
-  let title=name.replace(/\[[\d.]+\s*(GB|MB)\]/g,'')
-    .replace(/\b(2160p|1080p|720p)\b/gi,'')
-    .replace(/\b(H\.?265|H\.?264|AV1|x265|x264)\b/gi,'')
-    .replace(/\b(AAC|DDP\d*\.?\d*|AC3|EAC3|FLAC|DTS)\b/gi,'')
-    .replace(/\b(NF|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
-    .replace(/\b(19\d{2}|20\d{2})\b/g,'')
-    .replace(/\[.*?\]/g,'')
-    .replace(/\./g,' ')
-    .replace(/\s+/g,' ').trim()
-    .replace(/[_-]+/g,' ')
-    .replace(/\s+([,;:])/g,'$1')
-    .replace(/^\d+\s+/,'')
+  let title=name
+    .replace(/\[[\d.]+\s*(GB|MB)\]/g,'')
+    .replace(/\b(2160p|1080p|720p|576p|480p)\b/gi,'')
+    .replace(/\b(H\.?265|H\.?264|AV1|x265|x264|HEVC|AVC)\b/gi,'')
+    .replace(/\b(AAC|DDP\d*\.?\d*|AC3|EAC3|FLAC|DTS|TrueHD)\b/gi,'')
+    .replace(/\b(NF|AMZN|HULU|DSNP|iT|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
+    .replace(/\b(DV|HDR10\+?|HDR|DolbyVision|HLG)\b/gi,'')
+    .replace(/\bAtmos\b/gi,'')
     .replace(/\bMULTI\b/gi,'')
     .replace(/\bWEB\b/gi,'')
     .replace(/\bDL\b/gi,'')
+    .replace(/\b(19\d{2}|20\d{2})\b/g,'')
+    .replace(/\[.*?\]/g,'')
+    .replace(/-[\w.]+\.(mkv|mp4|avi|mov)$/i,'')
+    .replace(/\./g,' ')
+    .replace(/[_-]+/g,' ')
+    .replace(/\s+/g,' ').trim()
+    .replace(/\s+([,;:])/g,'$1')
+    .replace(/^\d+\s+/,'')
+    .replace(/\s+/g,' ').trim()
+    .replace(/\b[iI]\b/g,'')
     .replace(/\s+/g,' ').trim();
+
+  const hdr=hdrMatch?hdrMatch[1].toUpperCase().replace('DOLBYVISION','DV'):'';
+  const atmos=atmosMatch?'Atmos':'';
+  const audio=audioMatch?audioMatch[1].toUpperCase():'';
+  const group=groupMatch?groupMatch[1].replace(/\./g,' ').trim():'';
 
   return{
     title: title || 'Unknown',
     year: yearMatch ? yearMatch[1] : '',
     resolution: resMatch ? resMatch[1].toLowerCase() : '1080p',
     size: size ? size + ' ' + sizeUnit : '',
-    codec: codecMatch ? codecMatch[1].toUpperCase().replace('X265','H.265').replace('X264','H.264') : '',
-    audio: audioMatch ? audioMatch[1].toUpperCase() : ''
+    codec: codecMatch ? codecMatch[1].toUpperCase().replace('X265','H.265').replace('X264','H.264').replace('HEVC','H.265').replace('AVC','H.264') : '',
+    audio: audio,
+    hdr: hdr,
+    atmos: atmos,
+    source: sourceMatch ? sourceMatch[1].toUpperCase() : '',
+    group: group,
+    _groupKey: ((title||'')+' '+(yearMatch?yearMatch[1]:'')).toLowerCase().replace(/\s+/g,' ').trim()
   };
 }
 
@@ -546,9 +588,10 @@ function render(){
   const res=document.getElementById('filterResolution').value;
   const codec=document.getElementById('filterCodec').value;
   const sort=document.getElementById('filterSort').value;
+  const grouped=document.getElementById('filterGroup').checked;
 
   let filtered=links.filter(l=>{
-    const search=(l.title||'').toLowerCase()+' '+(l.overview||'').toLowerCase();
+    const search=(l.title||'').toLowerCase()+' '+(l.overview||'').toLowerCase()+' '+(l.hdr||'').toLowerCase()+' '+(l.atmos||'').toLowerCase();
     return search.includes(q) && (!res||(l.resolution||'').includes(res)) && (!codec||(l.codec||'').includes(codec));
   });
 
@@ -557,44 +600,124 @@ function render(){
   else if(sort==='az')filtered.sort((a,b)=>(a.title||'').localeCompare(b.title||''));
   else if(sort==='za')filtered.sort((a,b)=>(b.title||'').localeCompare(a.title||''));
 
-  const total=filtered.length;
-  const pages=Math.max(1,Math.ceil(total/PER_PAGE));
-  if(page>pages)page=pages;
-  const start=(page-1)*PER_PAGE;
-  const items=filtered.slice(start,start+PER_PAGE);
   const grid=document.getElementById('grid');
 
-  if(!items.length){
-    grid.innerHTML=`<div class="empty-state"><div class="big">🎬</div><h3>No links found</h3><p>${total===0?'Add your first link to get started!':'Try different search terms or filters'}</p></div>`;
-  }else{
-    grid.innerHTML=items.map(l=>{
-      const poster=l.poster||'';
-      const imgHtml=poster?`<img class="card-img" src="${poster}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-img\\'>🎬</div>'">`:`<div class="card-img">🎬</div>`;
-      const yearHtml=l.year?`<div class="card-year">${l.year}</div>`:'';
-      const badges=[];
-      if(l.resolution)badges.push(`<span class="badge badge-${l.resolution}">${l.resolution}</span>`);
-      if(l.codec)badges.push(`<span class="badge badge-codec">${l.codec}</span>`);
-      if(l.audio)badges.push(`<span class="badge badge-audio">${l.audio}</span>`);
-      if(l.size)badges.push(`<span class="badge badge-size">${l.size}</span>`);
-      const overview=l.overview?`<div class="card-overview">${l.overview.slice(0,200)}${l.overview.length>200?'...':''}</div>`:'';
-      return `
-        <div class="card">
-          ${imgHtml}
-          <div class="card-body">
-            <div class="card-title">${l.title||'Unknown'}</div>
-            ${yearHtml}
-            <div class="card-badges">${badges.join('')}</div>
-            ${overview}
-            <div class="card-actions">
-              <a href="${l.url}" target="_blank" rel="noopener" class="btn btn-success btn-sm">⬇ Download</a>
-              <button class="btn btn-danger btn-sm" onclick="deleteLink('${l.id}')">✕</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
+  if(!filtered.length){
+    grid.innerHTML=`<div class="empty-state"><div class="big">🎬</div><h3>No links found</h3><p>${links.length===0?'Add your first link to get started!':'Try different search terms or filters'}</p></div>`;
+    updateStats();
+    document.getElementById('pagination').innerHTML='';
+    return;
   }
 
+  if(grouped){
+    renderGrouped(filtered,grid);
+  }else{
+    renderFlat(filtered,grid);
+  }
+  updateStats();
+  renderPagination(filtered.length);
+}
+
+function renderFlat(items,grid){
+  const start=(page-1)*PER_PAGE;
+  const pageItems=items.slice(start,start+PER_PAGE);
+  grid.innerHTML=pageItems.map(l=>{
+    const poster=l.poster||'';
+    const imgHtml=poster?`<img class="card-img" src="${poster}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-img\\'>🎬</div>'">`:`<div class="card-img">🎬</div>`;
+    const yearHtml=l.year?`<div class="card-year">${l.year}</div>`:'';
+    const badges=linkBadges(l);
+    const overview=l.overview?`<div class="card-overview">${l.overview.slice(0,200)}${l.overview.length>200?'...':''}</div>`:'';
+    return `
+      <div class="card">
+        ${imgHtml}
+        <div class="card-body">
+          <div class="card-title">${l.title||'Unknown'}</div>
+          ${yearHtml}
+          <div class="card-badges">${badges.join('')}</div>
+          ${overview}
+          <div class="card-actions">
+            <a href="${l.url}" target="_blank" rel="noopener" class="btn btn-success btn-sm">⬇ Download</a>
+            <button class="btn btn-danger btn-sm" onclick="deleteLink('${l.id}')">✕</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderGrouped(items,grid){
+  const groups={};
+  const posterMap={};
+  const overviewMap={};
+  items.forEach(l=>{
+    const key=l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+    if(!groups[key]){groups[key]=[];posterMap[key]='';overviewMap[key]=''}
+    groups[key].push(l);
+    if(l.poster&&!posterMap[key])posterMap[key]=l.poster;
+    if(l.overview&&!overviewMap[key])overviewMap[key]=l.overview;
+  });
+
+  const sorted=Object.entries(groups).sort((a,b)=>{
+    const tA=a[1][0].title||'',tB=b[1][0].title||'';
+    return tA.localeCompare(tB);
+  });
+
+  grid.innerHTML=sorted.map(([key,items])=>{
+    const first=items[0];
+    const poster=posterMap[key];
+    const overview=overviewMap[key];
+    const imgHtml=poster?`<img src="${poster}" alt="">`:`<div style="width:50px;height:70px;background:#2a2a3e;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px">🎬</div>`;
+    const groupKey=key.replace(/\s/g,'_');
+    const count2160=items.filter(i=>(i.resolution||'').includes('2160')).length;
+    const count1080=items.filter(i=>(i.resolution||'').includes('1080')).length;
+    const count720=items.filter(i=>(i.resolution||'').includes('720')).length;
+
+    return `
+      <div class="card-grouped">
+        <div class="group-header" onclick="toggleGroup('${groupKey}')">
+          ${imgHtml}
+          <div class="group-info">
+            <h3>${first.title||'Unknown'}${first.year?` (${first.year})`:''}</h3>
+            <div class="group-meta">${items.length} links${count2160?` · ${count2160} 4K`:''}${count1080?` · ${count1080} 1080p`:''}${count720?` · ${count720} 720p`:''}</div>
+          </div>
+          <div class="group-count">${items.length}</div>
+          <div class="group-expand" id="gexp_${groupKey}">▾</div>
+        </div>
+        <div class="group-variants" id="gvar_${groupKey}">
+          ${items.map(l=>{
+            const badges=linkBadges(l);
+            return `
+              <div class="variant">
+                <div class="v-badges">${badges.join(' ')}${l.hdr?` <span class="badge badge-codec">${l.hdr}</span>`:''}${l.atmos?` <span class="badge badge-audio">${l.atmos}</span>`:''}</div>
+                <span class="v-size">${l.size||''}</span>
+                <a href="${l.url}" target="_blank" rel="noopener" class="v-link">⬇</a>
+                <button class="v-del" onclick="event.stopPropagation();deleteLink('${l.id}')">✕</button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleGroup(key){
+  const v=document.getElementById('gvar_'+key);
+  const e=document.getElementById('gexp_'+key);
+  const open=v.classList.toggle('open');
+  e.classList.toggle('open');
+}
+
+function linkBadges(l){
+  const b=[];
+  if(l.resolution)b.push(`<span class="badge badge-${l.resolution}">${l.resolution}</span>`);
+  if(l.codec)b.push(`<span class="badge badge-codec">${l.codec}</span>`);
+  if(l.audio)b.push(`<span class="badge badge-audio">${l.audio}</span>`);
+  if(l.size)b.push(`<span class="badge badge-size">${l.size}</span>`);
+  return b;
+}
+
+function updateStats(){
   document.getElementById('statTotal').textContent=links.length;
   const totalGB=links.reduce((s,l)=>{
     const m=l.size?.match(/^([\d.]+)\s*(GB|MB)/i);
@@ -605,9 +728,13 @@ function render(){
   document.getElementById('statSize').textContent=totalGB.toFixed(1)+' GB';
   document.getElementById('statMovies').textContent=links.filter(l=>!l.source||!l.source.toUpperCase().includes('TV')).length;
   document.getElementById('statRes').textContent=links.filter(l=>(l.resolution||'').includes('2160')).length;
+}
 
+function renderPagination(total){
+  const pages=Math.max(1,Math.ceil(total/PER_PAGE));
+  if(page>pages)page=pages;
   const pg=document.getElementById('pagination');
-  if(pages<=1){pg.innerHTML='';return}
+  if(pages<=1||document.getElementById('filterGroup').checked){pg.innerHTML='';return}
   pg.innerHTML=`
     <button onclick="page=1;render()" ${page<=1?'disabled':''}>««</button>
     <button onclick="page=Math.max(1,page-1);render()" ${page<=1?'disabled':''}>«</button>
