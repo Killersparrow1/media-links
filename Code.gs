@@ -12,7 +12,8 @@ const SHEET_NAME = 'MediaLinks';
 const HEADERS = [
   'ID','Title','Year','Resolution','File Size','Codec',
   'Audio Codec','Source','Download URL','TMDB ID','Poster URL',
-  'Overview','Genre','Rating','Date Added','Watched','Notes'
+  'Overview','Genre','Rating','Date Added','Watched','Notes',
+  'Type','Season','Episode'
 ];
 
 function getSheet_() {
@@ -99,7 +100,10 @@ function doPost(e) {
       data.rating || '',
       data.dateAdded || new Date().toISOString(),
       data.watched || 'No',
-      data.notes || ''
+      data.notes || '',
+      data.type || '',
+      data.season || '',
+      data.episode || ''
     ];
     sheet.appendRow(row);
 

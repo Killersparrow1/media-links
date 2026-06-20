@@ -161,7 +161,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="stats" id="stats">
     <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Total Links</div></div>
     <div class="stat-card"><div class="stat-num" id="statSize">0 GB</div><div class="stat-label">Total Size</div></div>
-    <div class="stat-card"><div class="stat-num" id="statMovies">0</div><div class="stat-label">Movies</div></div>
+    <div class="stat-card"><div class="stat-num" id="statMovies">0</div><div class="stat-label">Movies / Series</div></div>
     <div class="stat-card"><div class="stat-num" id="statRes">0</div><div class="stat-label">4K Links</div></div>
   </div>
 
@@ -182,6 +182,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <option value="H.265">H.265</option>
         <option value="H.264">H.264</option>
         <option value="AV1">AV1</option>
+      </select>
+      <select id="filterType" onchange="render()">
+        <option value="">All Types</option>
+        <option value="Movie">Movies</option>
+        <option value="TV">Series</option>
+        <option value="Collection">Collections</option>
       </select>
       <select id="filterSort" onchange="render()">
         <option value="newest">Newest First</option>
@@ -245,13 +251,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <label>Audio Codec</label>
           <input type="text" id="fieldAudio" placeholder="e.g. DDP5.1, AAC">
         </div>
-        <div class="form-group">
-          <label>Source</label>
-          <input type="text" id="fieldSource" placeholder="e.g. NF, WEB-DL">
-        </div>
+      <div class="form-group">
+        <label>Source</label>
+        <input type="text" id="fieldSource" placeholder="e.g. NF, WEB-DL">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="fieldType">
+          <option value="Movie">Movie</option>
+          <option value="TV">TV Series</option>
+          <option value="Collection">Collection</option>
+        </select>
       </div>
       <div class="form-group">
-        <label>TMDB Auto-Fill</label>
+        <label>Season</label>
+        <input type="text" id="fieldSeason" placeholder="e.g. 1">
+      </div>
+      <div class="form-group">
+        <label>Episode</label>
+        <input type="text" id="fieldEpisode" placeholder="e.g. 1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>TMDB Auto-Fill</label>
         <div style="display:flex;gap:8px">
           <input type="text" id="fieldTmdbSearch" placeholder="Search TMDB by title..." style="flex:1">
           <button type="button" class="btn btn-primary btn-sm" onclick="searchTMDB()">Search</button>
@@ -373,9 +397,18 @@ function parseFilename(name){
   const atmosMatch=name.match(/\bAtmos\b/i);
   const sourceMatch=name.match(/\b(NF|AMZN|HULU|DSNP|iT|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV|WEB)\b/i);
   const groupMatch=name.match(/-([\w.]+)\.(mkv|mp4|avi|mov)$/i);
+  const seasonEpMatch=name.match(/\bS(\d+)\s*E(\d+)\b/i)||name.match(/\bS(\d+)\.E(\d+)\b/i);
+  const seasonMatch=name.match(/\bS(\d+)\b(?!\s*E)/i)||name.match(/\bSeason\s*(\d+)\b/i);
+  const epMatch=name.match(/\bE(\d+)\b(?!\s*\d)/i)||name.match(/\bEpisode\s*(\d+)\b/i);
 
   let size='',sizeUnit='GB';
   if(sizeMatch){size=sizeMatch[1];sizeUnit=sizeMatch[2]||'GB';}
+
+  let season='',episode='';
+  let type='Movie';
+  if(seasonEpMatch){season=seasonEpMatch[1];episode=seasonEpMatch[2];type='TV';}
+  else if(seasonMatch&&!seasonMatch.input.match(/^[A-Za-z]+$/)){season=seasonMatch[1];type='TV';if(epMatch)episode=epMatch[1];}
+  else if(epMatch&&epMatch.index<15&&!season){episode=epMatch[1];type='TV';}
 
   let title=name
     .replace(/\[[\d.]+\s*(GB|MB)\]/g,'')
@@ -389,8 +422,15 @@ function parseFilename(name){
     .replace(/\bWEB\b/gi,'')
     .replace(/\bDL\b/gi,'')
     .replace(/\b(19\d{2}|20\d{2})\b/g,'')
+    .replace(/\bS(\d+)\s*E(\d+)\b/gi,'')
+    .replace(/\bS(\d+)\b(?!\s*E)/gi,'')
+    .replace(/\bSeason\s*(\d+)\b/gi,'')
+    .replace(/\bE(\d+)\b/gi,'')
+    .replace(/\bEpisode\s*(\d+)\b/gi,'')
     .replace(/\[.*?\]/g,'')
     .replace(/-[\w.]+\.(mkv|mp4|avi|mov)$/i,'')
+    .replace(/#\w+/g,'')
+    .replace(/\(.*?\)/g,'')
     .replace(/\./g,' ')
     .replace(/[_-]+/g,' ')
     .replace(/\s+/g,' ').trim()
@@ -416,6 +456,9 @@ function parseFilename(name){
     atmos: atmos,
     source: sourceMatch ? sourceMatch[1].toUpperCase() : '',
     group: group,
+    type: type,
+    season: season,
+    episode: episode,
     _groupKey: ((title||'')+' '+(yearMatch?yearMatch[1]:'')).toLowerCase().replace(/\s+/g,' ').trim()
   };
 }
@@ -489,8 +532,12 @@ function submitLink(e){
     tmdbId: selectedTmdb ? selectedTmdb.id : '',
     dateAdded: new Date().toISOString(),
     watched: 'No',
-    notes: document.getElementById('fieldNotes').value.trim()
+    notes: document.getElementById('fieldNotes').value.trim(),
+    type: document.getElementById('fieldType').value,
+    season: document.getElementById('fieldSeason').value.trim(),
+    episode: document.getElementById('fieldEpisode').value.trim()
   };
+  link._groupKey=((link.title||'')+' '+(link.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
   links.unshift(link);
   localStorage.setItem('mlinks',JSON.stringify(links));
   saveToSheet(link);
@@ -550,22 +597,35 @@ function clearTMDB(){
 function bulkImport(){
   const text=document.getElementById('bulkText').value.trim();
   if(!text){toast('Paste some links first','info');return}
-  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l&&!l.match(/^AUDIO\s+TRACKS/i)&&!l.match(/^for\s+refer/i));
   const parsed=[];
+  let context=null;
   let i=0;
   while(i<lines.length){
     const line=lines[i];
     const urlMatch=line.match(/https?:\/\/[^\s\[\]]+/);
+
     if(urlMatch){
       const url=urlMatch[0];
       const before=line.substring(0,urlMatch.index).trim();
-      const info=parseFilename(before||'Unknown');
-      parsed.push({...info,url,dateAdded:new Date().toISOString(),watched:'No',notes:''});
+      if(context){parsed.push({...context,size:'',url,dateAdded:new Date().toISOString(),watched:'No',notes:''});context=null}
+      else{const info=parseFilename(before||'Unknown');parsed.push({...info,url,dateAdded:new Date().toISOString(),watched:'No',notes:''})}
       i++;
     }else if(i+1<lines.length && lines[i+1].match(/^https?:\/\//)){
+      const nextUrl=lines[i+1];
       const info=parseFilename(line);
-      parsed.push({...info,url:lines[i+1],dateAdded:new Date().toISOString(),watched:'No',notes:''});
+      parsed.push({...info,url:nextUrl,dateAdded:new Date().toISOString(),watched:'No',notes:''});
       i+=2;
+    }else if(line.match(/\bS(\d+)\b/i)&&i+1<lines.length&&lines[i+1].match(/^https?:\/\//)){
+      const season=line.match(/\bS(\d+)\b/i)[1];
+      const size=line.match(/\[([\d.]+)\s*(GB|MB)\]/i);
+      const entry={title:context?context.title:'Unknown',year:context?context.year:'',resolution:context?context.resolution:'1080p',codec:context?context.codec:'',audio:context?context.audio:'',source:context?context.source:'',hdr:context?context.hdr:'',atmos:context?context.atmos:'',group:context?context.group:'',type:'TV',season:season,episode:'',size:size?size[1]+' '+size[2]:'',url:lines[i+1],dateAdded:new Date().toISOString(),watched:'No',notes:''};
+      parsed.push(entry);
+      i+=2;
+    }else if(!line.match(/\.(mkv|mp4|avi|mov)$/i)&&(line.match(/(2160p|1080p|720p|#\w+|S\d+|CODEC|AV1)/i)||line.match(/#\w+/))){
+      const info=parseFilename(line);
+      context={title:info.title,year:info.year,resolution:info.resolution,codec:info.codec,audio:info.audio,source:info.source,hdr:info.hdr,atmos:info.atmos,group:info.group,type:'TV'};
+      i++;
     }else{
       i++;
     }
@@ -589,10 +649,11 @@ function render(){
   const codec=document.getElementById('filterCodec').value;
   const sort=document.getElementById('filterSort').value;
   const grouped=document.getElementById('filterGroup').checked;
+  const type=document.getElementById('filterType').value;
 
   let filtered=links.filter(l=>{
     const search=(l.title||'').toLowerCase()+' '+(l.overview||'').toLowerCase()+' '+(l.hdr||'').toLowerCase()+' '+(l.atmos||'').toLowerCase();
-    return search.includes(q) && (!res||(l.resolution||'').includes(res)) && (!codec||(l.codec||'').includes(codec));
+    return search.includes(q) && (!res||(l.resolution||'').includes(res)) && (!codec||(l.codec||'').includes(codec)) && (!type||(l.type||'')===type);
   });
 
   if(sort==='newest')filtered.sort((a,b)=>new Date(b.dateAdded||0)-new Date(a.dateAdded||0));
@@ -678,7 +739,7 @@ function renderGrouped(items,grid){
           ${imgHtml}
           <div class="group-info">
             <h3>${first.title||'Unknown'}${first.year?` (${first.year})`:''}</h3>
-            <div class="group-meta">${items.length} links${count2160?` · ${count2160} 4K`:''}${count1080?` · ${count1080} 1080p`:''}${count720?` · ${count720} 720p`:''}</div>
+            <div class="group-meta">${items.length} links${first.type==='TV'?' · Series':''}${first.type==='Collection'?' · Collection':''}${count2160?` · ${count2160} 4K`:''}${count1080?` · ${count1080} 1080p`:''}${count720?` · ${count720} 720p`:''}</div>
           </div>
           <div class="group-count">${items.length}</div>
           <div class="group-expand" id="gexp_${groupKey}">▾</div>
@@ -686,10 +747,12 @@ function renderGrouped(items,grid){
         <div class="group-variants" id="gvar_${groupKey}">
           ${items.map(l=>{
             const badges=linkBadges(l);
+            const seasonLabel=l.type==='TV'&&l.season?` <span class="badge badge-codec" style="background:#2980b9">S${l.season}${l.episode?'.E'+l.episode:''}</span>`:'';
+            const sizeLabel=l.size?` <span class="badge badge-size">${l.size}</span>`:'';
             return `
               <div class="variant">
-                <div class="v-badges">${badges.join(' ')}${l.hdr?` <span class="badge badge-codec">${l.hdr}</span>`:''}${l.atmos?` <span class="badge badge-audio">${l.atmos}</span>`:''}</div>
-                <span class="v-size">${l.size||''}</span>
+                <div class="v-badges">${seasonLabel}${badges.join(' ')}</div>
+                ${sizeLabel?`<span class="v-size">${l.size}</span>`:''}
                 <a href="${l.url}" target="_blank" rel="noopener" class="v-link">⬇</a>
                 <button class="v-del" onclick="event.stopPropagation();deleteLink('${l.id}')">✕</button>
               </div>
@@ -710,10 +773,14 @@ function toggleGroup(key){
 
 function linkBadges(l){
   const b=[];
+  if(l.type==='TV'&&l.season)l.season&&!l.episode?b.push(`<span class="badge badge-codec" style="background:#2980b9">S${l.season}</span>`):b.push(`<span class="badge badge-codec" style="background:#2980b9">S${l.season} E${l.episode||'?'}</span>`);
+  else if(l.type==='Collection')b.push(`<span class="badge badge-codec" style="background:#8e44ad">Collection</span>`);
   if(l.resolution)b.push(`<span class="badge badge-${l.resolution}">${l.resolution}</span>`);
   if(l.codec)b.push(`<span class="badge badge-codec">${l.codec}</span>`);
   if(l.audio)b.push(`<span class="badge badge-audio">${l.audio}</span>`);
-  if(l.size)b.push(`<span class="badge badge-size">${l.size}</span>`);
+  if(l.hdr)b.push(`<span class="badge badge-codec" style="background:#e67e22">${l.hdr}</span>`);
+  if(l.atmos)b.push(`<span class="badge badge-audio">Atmos</span>`);
+  if(l.size&&!l.season)b.push(`<span class="badge badge-size">${l.size}</span>`);
   return b;
 }
 
@@ -726,7 +793,7 @@ function updateStats(){
     return s+(m[2].toUpperCase()==='MB'?val/1024:val);
   },0);
   document.getElementById('statSize').textContent=totalGB.toFixed(1)+' GB';
-  document.getElementById('statMovies').textContent=links.filter(l=>!l.source||!l.source.toUpperCase().includes('TV')).length;
+  document.getElementById('statMovies').textContent=links.filter(l=>(l.type||'Movie')==='Movie').length+'/'+links.filter(l=>l.type==='TV').length;
   document.getElementById('statRes').textContent=links.filter(l=>(l.resolution||'').includes('2160')).length;
 }
 
