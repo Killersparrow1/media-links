@@ -894,7 +894,7 @@ function renderGrouped(items,grid){
           ${imgHtml}
           <div class="group-info">
             <h3>${first.title||'Unknown'}${first.year?` (${first.year})`:''}</h3>
-            <div class="group-meta">${items.length} links${first.type==='TV'?' · Series':''}${first.type==='Collection'?' · Collection':''}${count2160?` · ${count2160} 4K`:''}${count1080?` · ${count1080} 1080p`:''}${count720?` · ${count720} 720p`:''}</div>
+            <div class="group-meta">${items.length} links${first.type==='TV'?' | Series':''}${first.type==='Collection'?' | Collection':''}${count2160?` | ${count2160} 4K`:''}${count1080?` | ${count1080} 1080p`:''}${count720?` | ${count720} 720p`:''}</div>
           </div>
           <div class="group-count">${items.length}</div>
           <button class="btn-share" onclick="event.stopPropagation();shareGroup('${encodeURIComponent(key)}')" title="Share this group">🔗</button>
