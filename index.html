@@ -158,6 +158,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button class="btn btn-success btn-sm" onclick="exportData()">📤 Export</button>
       <button class="btn btn-warning btn-sm" onclick="document.getElementById('importFile').click()">📥 Import</button>
       <button class="btn btn-outline btn-sm" onclick="toggleSelect()" id="selectBtn">☐ Select</button>
+      <button class="btn btn-outline btn-sm" onclick="syncAll()" id="syncBtn" title="Sync local links to cloud">☁️ Sync</button>
       <button class="btn btn-outline btn-sm" onclick="openSettings()">⚙️</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
     </div>
@@ -528,9 +529,10 @@ async function saveToSheet(link){
     const r=await fetch(API_URL,{
       method:'POST',
       body:JSON.stringify(link),
-      headers:{'Content-Type':'application/json'}
+      headers:{'Content-Type':'text/plain'}
     });
-    return r.ok;
+    const data=await r.json();
+    return data.success===true;
   }catch(e){return false}
 }
 
@@ -628,7 +630,7 @@ function clearTMDB(){
   document.getElementById('tmdbSelected').style.display='none';
 }
 
-function bulkImport(){
+async function bulkImport(){
   const text=document.getElementById('bulkText').value.trim();
   if(!text){toast('Paste some links first','info');return}
   const lines=text.split('\n').map(l=>l.trim()).filter(l=>l&&!l.match(/^AUDIO\s+TRACKS/i)&&!l.match(/^for\s+refer/i));
@@ -665,16 +667,19 @@ function bulkImport(){
     }
   }
   if(!parsed.length){toast('Could not parse any links. Check format.','error');return}
-  parsed.forEach(l=>{
+  let synced=0;
+  for(const l of parsed){
     l.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
     links.unshift(l);
-    saveToSheet(l);
-  });
+    const ok=await saveToSheet(l);
+    if(ok)synced++;
+  }
   localStorage.setItem('mlinks',JSON.stringify(links));
   render();
   closeModal('bulkModal');
   document.getElementById('bulkText').value='';
-  toast(`✅ Imported ${parsed.length} links!`,'success');
+  const msg=synced===parsed.length?`✅ Imported ${parsed.length} links!`:`✅ ${parsed.length} imported (${synced} synced to cloud)`;
+  toast(msg,synced===parsed.length?'success':'info');
 }
 
 function render(){
@@ -913,6 +918,18 @@ function deleteLink(id){
   deleteFromSheet(id);
   render();
   toast('🗑️ Link deleted','info');
+}
+
+async function syncAll(){
+  const btn=document.getElementById('syncBtn');
+  btn.textContent='⏳ Syncing...';btn.disabled=true;
+  let synced=0,failed=0;
+  for(const l of links){
+    const ok=await saveToSheet(l);
+    if(ok)synced++;else failed++;
+  }
+  btn.textContent='☁️ Sync';btn.disabled=false;
+  toast(synced?`☁️ Synced ${synced} links${failed?' ('+failed+' failed)':''}`:'⚠️ No links to sync',failed?'error':'success');
 }
 
 function exportData(){
