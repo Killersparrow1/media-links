@@ -158,7 +158,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button class="btn btn-success btn-sm" onclick="exportData()">📤 Export</button>
       <button class="btn btn-warning btn-sm" onclick="document.getElementById('importFile').click()">📥 Import</button>
       <button class="btn btn-outline btn-sm" onclick="toggleSelect()" id="selectBtn">☐ Select</button>
-      <button class="btn btn-outline btn-sm" onclick="syncAll()" id="syncBtn" title="Sync local links to cloud">☁️ Sync</button>
       <button class="btn btn-outline btn-sm" onclick="openSettings()">⚙️</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
     </div>
@@ -583,7 +582,7 @@ async function submitLink(e){
   document.getElementById('tmdbResults').innerHTML='';
   document.getElementById('tmdbSelected').style.display='none';
   selectedTmdb=null;
-  if(!ok)toast('✅ Saved locally — cloud sync failed. Authorize the script in Settings','info');
+  if(!ok)toast('❌ Cloud sync failed — check ⚙️ settings','error');
   else toast('✅ Link added!','success');
 }
 
@@ -919,18 +918,6 @@ function deleteLink(id){
   deleteFromSheet(id);
   render();
   toast('🗑️ Link deleted','info');
-}
-
-async function syncAll(){
-  const btn=document.getElementById('syncBtn');
-  btn.textContent='⏳ Syncing...';btn.disabled=true;
-  let synced=0,failed=0;
-  for(const l of links){
-    const ok=await saveToSheet(l);
-    if(ok)synced++;else failed++;
-  }
-  btn.textContent='☁️ Sync';btn.disabled=false;
-  toast(synced?`☁️ Synced ${synced} links${failed?' ('+failed+' failed)':''}`:'⚠️ No links to sync',failed?'error':'success');
 }
 
 function exportData(){
