@@ -1,4 +1,9 @@
 config.ini
 *.session
+*.session-journal
 last_id.txt
 venv/
+telegram_fetch.py
+SETUP.md
+config.ini.template
+requirements.txt

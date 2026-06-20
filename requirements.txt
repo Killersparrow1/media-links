@@ -1,9 +1,0 @@
-certifi==2026.6.17
-charset-normalizer==3.4.7
-idna==3.18
-pyaes==1.6.1
-pyasn1==0.6.3
-requests==2.34.2
-rsa==4.9.1
-Telethon==1.44.0
-urllib3==2.7.0

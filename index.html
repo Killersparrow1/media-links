@@ -187,6 +187,7 @@ body:not(.admin) [onclick*="deleteLink"]{display:none!important}
       <button class="btn btn-outline btn-sm admin-only" onclick="toggleSelect()" id="selectBtn">☐ Select</button>
       <button class="btn btn-outline btn-sm admin-only" onclick="openSettings()">⚙️</button>
       <button class="btn btn-outline btn-sm admin-only" onclick="fillAllTMDB()" id="fillTmdbBtn">🖼 Fill TMDB</button>
+      <button class="btn btn-outline btn-sm admin-only" onclick="cleanAllTitles()" id="cleanTitlesBtn">🧹 Clean Titles</button>
       <button class="btn-lock" id="lockBtn" onclick="toggleAdmin()" title="Admin access">🔒</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
     </div>
@@ -460,7 +461,7 @@ function parseFilename(name){
   const yearMatch=name.match(/\b(19\d{2}|20\d{2})\b/);
   const hdrMatch=name.match(/\b(DV|HDR10\+?|HDR|DolbyVision|HLG)\b/i);
   const atmosMatch=name.match(/\bAtmos\b/i);
-  const sourceMatch=name.match(/\b(NF|AMZN|HULU|DSNP|iT|FAND|MA|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV|WEB)\b/i);
+  const sourceMatch=name.match(/\b(NF|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV|WEB)\b/i);
   const groupMatch=name.match(/-([\w.]+)\.(mkv|mp4|avi|mov)$/i);
   const seasonEpMatch=name.match(/\bS(\d+)\s*E(\d+)\b/i)||name.match(/\bS(\d+)\.E(\d+)\b/i);
   const seasonMatch=name.match(/\bS(\d+)\b(?!\s*E)/i)||name.match(/\bSeason\s*(\d+)\b/i);
@@ -480,7 +481,7 @@ function parseFilename(name){
     .replace(/\b(2160p|1080p|720p|576p|480p|4K)\b/gi,'')
     .replace(/\b(H\.?265|H\.?264|AV1|x265|x264|HEVC|AVC)\b/gi,'')
     .replace(/\b(AAC|DDPA?\d*\.?\d*|AC3|EAC3|FLAC|DTS|TrueHD)\b/gi,'')
-    .replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
+    .replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
     .replace(/\b(DV|HDR10\+?|HDR|DolbyVision|HLG)\b/gi,'')
     .replace(/\bAtmos\b/gi,'')
     .replace(/\bMULTI\b/gi,'')
@@ -526,7 +527,7 @@ function parseFilename(name){
     type: type,
     season: season,
     episode: episode,
-    _groupKey: ((title||'')+' '+(yearMatch?yearMatch[1]:'')).toLowerCase().replace(/\s+/g,' ').trim()
+    _groupKey: (title||'').toLowerCase().replace(/\s+/g,' ').trim()
   };
 }
 
@@ -557,7 +558,7 @@ function setGroupPoster(groupKey,rawKey){
   if(!url)return;
   let count=0;
   links.forEach(l=>{
-    const lk=l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+    const lk=l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim();
     if(lk===rawKey){
       l.poster=url;
       count++;
@@ -565,8 +566,13 @@ function setGroupPoster(groupKey,rawKey){
     }
   });
   if(count){
-    localStorage.setItem('mlinks',JSON.stringify(links));
-    render();
+  localStorage.setItem('mlinks',JSON.stringify(links));
+  if(TMDB_KEY&&synced>0){
+    const btn=document.getElementById('fillTmdbBtn');
+    if(btn)btn.disabled=false;
+    fillAllTMDB();
+  }
+  render();
     toast(`✅ Poster set for ${count} links`,'success');
   }
 }
@@ -670,7 +676,7 @@ async function submitLink(e){
     season: document.getElementById('fieldSeason').value.trim(),
     episode: document.getElementById('fieldEpisode').value.trim()
   };
-  link._groupKey=((link.title||'')+' '+(link.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+  link._groupKey=(link.title||'').toLowerCase().replace(/\s+/g,' ').trim();
 
   const dup=links.find(l=>l.url===link.url);
   if(dup){toast('⚠️ Duplicate URL — already exists','error');return}
@@ -685,7 +691,28 @@ async function submitLink(e){
   document.getElementById('tmdbSelected').style.display='none';
   selectedTmdb=null;
   if(!ok)toast('❌ Cloud sync failed — check ⚙️ settings','error');
-  else toast('✅ Link added!','success');
+  else{
+    if(TMDB_KEY&&!link.tmdbId){
+      const q=encodeURIComponent((link.title||'')+' '+(link.year||''));
+      try{
+        const r=await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${q}`);
+        const data=await r.json();
+        const res=(data.results||[]).find(r=>r.media_type==='movie'||r.media_type==='tv');
+        if(res){
+          link.tmdbId=res.id;
+          link.poster=res.poster_path?'https://image.tmdb.org/t/p/w500'+res.poster_path:'';
+          link.overview=res.overview||'';
+          link.genre=(res.genre_ids||[]).join(',');
+          link.rating=res.vote_average||'';
+          await deleteFromSheet(link.id);
+          await saveToSheet(link);
+          localStorage.setItem('mlinks',JSON.stringify(links));
+          render();
+        }
+      }catch(e){}
+    }
+    toast('✅ Link added!','success');
+  }
 }
 
 async function searchTMDB(){
@@ -737,7 +764,7 @@ async function fillAllTMDB(){
   if(!key){toast('Add your TMDB key in Settings first','error');return}
   const groups={};
   links.forEach(l=>{
-    const gk=l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+    const gk=l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim();
     if(!l.tmdbId&&(l.title||l.year)){
       if(!groups[gk])groups[gk]=[];
       groups[gk].push(l);
@@ -780,6 +807,37 @@ async function fillAllTMDB(){
   btn.textContent='🖼 Fill TMDB';
   render();
   toast(`✅ Filled ${done} groups`,'success');
+}
+
+async function cleanAllTitles(){
+  if(!admin){toast('Admin only','error');return}
+  let changed=0;
+  const btn=document.getElementById('cleanTitlesBtn');
+  btn.disabled=true;
+  btn.textContent='🧹 Cleaning...';
+  for(const l of links){
+    const old=l.title;
+    let t=l.title||'';
+    t=t.replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
+     .replace(/\(.*?\)/g,'').replace(/\[.*?\]/g,'')
+     .replace(/\b(10bit|8bit|REPACK|PROPER|iNTERNAL)\b/gi,'')
+     .replace(/\b(RIP|BY|for)\b/gi,'').replace(/#\w+/g,'')
+     .replace(/\./g,' ').replace(/[_-]+/g,' ')
+     .replace(/\s+/g,' ').trim();
+    if(t!==old){
+      l.title=t;
+      l._groupKey=t.toLowerCase().replace(/\s+/g,' ').trim();
+      await deleteFromSheet(l.id);
+      await saveToSheet(l);
+      changed++;
+      btn.textContent=`🧹 ${changed}`;
+    }
+  }
+  localStorage.setItem('mlinks',JSON.stringify(links));
+  btn.disabled=false;
+  btn.textContent='🧹 Clean Titles';
+  render();
+  toast(`✅ Cleaned ${changed} titles`,'success');
 }
 
 async function bulkImport(){
@@ -838,6 +896,31 @@ async function bulkImport(){
   const cloudMsg=synced<newParsed.length?` (${synced} synced to cloud)`:'';
   const dupMsg=dupCount?` (${dupCount} duplicates skipped)`:'';
   toast(`✅ ${newParsed.length} imported${cloudMsg}${dupMsg}`,'success');
+  if(TMDB_KEY&&synced>0){
+    const groups={};
+    newParsed.forEach(l=>{
+      const gk=l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim();
+      if(!l.tmdbId&&(l.title||l.year)){if(!groups[gk])groups[gk]=[];groups[gk].push(l)}
+    });
+    for(const [gk,items] of Object.entries(groups)){
+      const first=items[0];
+      try{
+        const r=await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent((first.title||'')+' '+(first.year||''))}`);
+        const data=await r.json();
+        const res=(data.results||[]).find(r=>r.media_type==='movie'||r.media_type==='tv');
+        if(res){
+          const poster=res.poster_path?'https://image.tmdb.org/t/p/w500'+res.poster_path:'';
+          for(const l of items){
+            l.tmdbId=res.id;l.poster=poster;l.overview=res.overview||'';l.genre=(res.genre_ids||[]).join(',');l.rating=res.vote_average||'';
+            if(admin){await deleteFromSheet(l.id);await saveToSheet(l)}
+          }
+        }
+      }catch(e){}
+      await new Promise(r=>setTimeout(r,600));
+    }
+    localStorage.setItem('mlinks',JSON.stringify(links));
+    render();
+  }
   }catch(e){toast('Import error: '+e.message,'error')}
 }
 
@@ -904,7 +987,7 @@ function renderGrouped(items,grid){
   const posterMap={};
   const overviewMap={};
   items.forEach(l=>{
-    const key=l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+    const key=l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim();
     if(!groups[key]){groups[key]=[];posterMap[key]='';overviewMap[key]=''}
     groups[key].push(l);
     if(l.poster&&!posterMap[key])posterMap[key]=l.poster;
@@ -935,7 +1018,7 @@ function renderGrouped(items,grid){
           ${imgHtml}
           <div class="group-info">
             <h3>${first.title||'Unknown'}${first.year?` (${first.year})`:''}</h3>
-            <div class="group-meta">${items.length} links${first.type==='TV'?` <span class="pill pill-series">Series</span>`:''}${first.type==='Collection'?` <span class="pill pill-series">Collection</span>`:''}${count2160?` <span class="pill pill-4k">${count2160}-4K</span>`:''}${count1080?` <span class="pill pill-1080p">${count1080}-1080p</span>`:''}${count720?` <span class="pill pill-720p">${count720}-720p</span>`:''}</div>
+            <div class="group-meta">${items.length} links${first.type==='TV'?` <span class="pill pill-series">Series</span>`:''}${first.type==='Collection'?` <span class="pill pill-series">Collection</span>`:''}${count2160?` <span class="pill pill-4k">4K</span>`:''}${count1080?` <span class="pill pill-1080p">1080p</span>`:''}${count720?` <span class="pill pill-720p">720p</span>`:''}</div>
           </div>
           <div class="group-count">${items.length}</div>
           <button class="btn-share" onclick="event.stopPropagation();shareGroup('${encodeURIComponent(key)}')" title="Share this group">🔗</button>
@@ -952,12 +1035,12 @@ function renderGrouped(items,grid){
           ${items.map(l=>{
             const badges=linkBadges(l);
             const seasonLabel=l.type==='TV'&&l.season?` <span class="badge badge-codec" style="background:#2980b9">S${l.season}${l.episode?'.E'+l.episode:''}</span>`:'';
-            const sizeLabel=l.size?` <span class="badge badge-size">${l.size}</span>`:'';
+            const sizeLabel=l.size?` <span class="badge badge-size">${formatSize(l.size)}</span>`:'';
             return `
               <div class="variant">
                 <input type="checkbox" class="v-cb" ${selected.has(l.id)?'checked':''} onclick="event.stopPropagation();toggleSelectItem('${l.id}')">
                 <div class="v-badges">${seasonLabel}${badges.join(' ')}</div>
-                ${sizeLabel?`<span class="v-size">${l.size}</span>`:''}
+                ${sizeLabel?`<span class="v-size">${formatSize(l.size)}</span>`:''}
                 <a href="${l.url}" target="_blank" rel="noopener" class="v-link">⬇</a>
                 <button class="v-del" style="${selectMode?'display:none':''}" onclick="event.stopPropagation();deleteLink('${l.id}')">✕</button>
               </div>
@@ -984,7 +1067,7 @@ function doMerge(fromGroupKey,fromRawKey){
   const sel=document.getElementById('msel_'+fromGroupKey);
   const targetKey=sel.value;
   if(!targetKey||targetKey===fromRawKey)return;
-  const targetItems=links.filter(l=>(l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim())===targetKey);
+  const targetItems=links.filter(l=>(l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim())===targetKey);
   if(!targetItems.length){toast('Target group not found','error');return}
   const targetTitle=targetItems[0].title||'';
   const targetYear=targetItems[0].year||'';
@@ -992,7 +1075,7 @@ function doMerge(fromGroupKey,fromRawKey){
   let moved=0;
   const toSync=[];
   links.forEach(l=>{
-    const lk=l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+    const lk=l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim();
     if(lk===fromRawKey){
       l.title=targetTitle;
       l.year=targetYear;
@@ -1020,8 +1103,17 @@ function linkBadges(l){
   if(l.audio)b.push(`<span class="badge badge-audio">${l.audio}</span>`);
   if(l.hdr)b.push(`<span class="badge badge-codec" style="background:#e67e22">${l.hdr}</span>`);
   if(l.atmos)b.push(`<span class="badge badge-audio">Atmos</span>`);
-  if(l.size&&!l.season)b.push(`<span class="badge badge-size">${l.size}</span>`);
+  if(l.size&&!l.season)b.push(`<span class="badge badge-size">${formatSize(l.size)}</span>`);
   return b;
+}
+
+function formatSize(s){
+  const m=(s||'').match(/^([\d.]+)\s*(GB|MB)/i);
+  if(!m)return s;
+  let val=parseFloat(m[1]),unit=m[2].toUpperCase();
+  if(unit==='MB'){val/=1024;unit='GB'}
+  if(unit==='GB'&&val>=1000){val/=1000;unit='TB'}
+  return parseFloat(val.toFixed(2))+' '+unit;
 }
 
 function updateStats(){
@@ -1119,9 +1211,9 @@ function deleteSelected(){
 function deleteLink(id){
   const link=links.find(l=>l.id===id);
   if(link){
-    const key=link._groupKey||((link.title||'')+' '+(link.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+    const key=(link._groupKey||(link.title||'')).toLowerCase().replace(/\s+/g,' ').trim();
     const siblings=links.filter(l=>{
-      const lk=l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+      const lk=l._groupKey||(l.title||'').toLowerCase().replace(/\s+/g,' ').trim();
       return lk===key&&l.id!==id;
     });
     if(siblings.length){
