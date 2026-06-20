@@ -481,7 +481,7 @@ function parseFilename(name){
     .replace(/\b(2160p|1080p|720p|576p|480p|4K)\b/gi,'')
     .replace(/\b(H\.?265|H\.?264|AV1|x265|x264|HEVC|AVC)\b/gi,'')
     .replace(/\b(AAC|DDPA?\d*\.?\d*|AC3|EAC3|FLAC|DTS|TrueHD)\b/gi,'')
-    .replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
+    .replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|NF|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
     .replace(/\b(DV|HDR10\+?|HDR|DolbyVision|HLG)\b/gi,'')
     .replace(/\bAtmos\b/gi,'')
     .replace(/\bMULTI\b/gi,'')
@@ -824,7 +824,7 @@ function cleanAllTitles(){
   for(const l of links){
     const old=l.title;
     let t=l.title||'';
-    t=t.replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
+    t=t.replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|NF|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
      .replace(/\(.*?\)/g,'').replace(/\[.*?\]/g,'')
      .replace(/\b(10bit|8bit|REPACK|PROPER|iNTERNAL)\b/gi,'')
      .replace(/\b(RIP|BY|for)\b/gi,'').replace(/#\w+/g,'')
