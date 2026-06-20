@@ -640,6 +640,7 @@ function clearTMDB(){
 }
 
 async function bulkImport(){
+  try{
   const text=document.getElementById('bulkText').value.trim();
   if(!text){toast('Paste some links first','info');return}
   const lines=text.split('\n').map(l=>l.trim()).filter(l=>l&&!l.match(/^AUDIO\s+TRACKS/i)&&!l.match(/^for\s+refer/i));
@@ -689,6 +690,7 @@ async function bulkImport(){
   document.getElementById('bulkText').value='';
   const msg=synced===parsed.length?`✅ Imported ${parsed.length} links!`:`✅ ${parsed.length} imported (${synced} synced to cloud)`;
   toast(msg,synced===parsed.length?'success':'info');
+  }catch(e){toast('Import error: '+e.message,'error')}
 }
 
 function render(){
