@@ -893,7 +893,6 @@ function getFiltered(){
 
 function deleteSelected(){
   if(!selected.size)return;
-  if(!confirm('Delete '+selected.size+' selected link'+(selected.size>1?'s':'')+'?'))return;
   let deleted=0;
   selected.forEach(id=>{
     links=links.filter(l=>l.id!==id);
@@ -912,7 +911,6 @@ function deleteSelected(){
 }
 
 function deleteLink(id){
-  if(!confirm('Delete this link?'))return;
   links=links.filter(l=>l.id!==id);
   localStorage.setItem('mlinks',JSON.stringify(links));
   deleteFromSheet(id);
