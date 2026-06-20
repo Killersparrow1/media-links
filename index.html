@@ -460,7 +460,7 @@ function parseFilename(name){
   const yearMatch=name.match(/\b(19\d{2}|20\d{2})\b/);
   const hdrMatch=name.match(/\b(DV|HDR10\+?|HDR|DolbyVision|HLG)\b/i);
   const atmosMatch=name.match(/\bAtmos\b/i);
-  const sourceMatch=name.match(/\b(NF|AMZN|HULU|DSNP|iT|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV|WEB)\b/i);
+  const sourceMatch=name.match(/\b(NF|AMZN|HULU|DSNP|iT|FAND|MA|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV|WEB)\b/i);
   const groupMatch=name.match(/-([\w.]+)\.(mkv|mp4|avi|mov)$/i);
   const seasonEpMatch=name.match(/\bS(\d+)\s*E(\d+)\b/i)||name.match(/\bS(\d+)\.E(\d+)\b/i);
   const seasonMatch=name.match(/\bS(\d+)\b(?!\s*E)/i)||name.match(/\bSeason\s*(\d+)\b/i);
@@ -480,7 +480,7 @@ function parseFilename(name){
     .replace(/\b(2160p|1080p|720p|576p|480p|4K)\b/gi,'')
     .replace(/\b(H\.?265|H\.?264|AV1|x265|x264|HEVC|AVC)\b/gi,'')
     .replace(/\b(AAC|DDPA?\d*\.?\d*|AC3|EAC3|FLAC|DTS|TrueHD)\b/gi,'')
-    .replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
+    .replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
     .replace(/\b(DV|HDR10\+?|HDR|DolbyVision|HLG)\b/gi,'')
     .replace(/\bAtmos\b/gi,'')
     .replace(/\bMULTI\b/gi,'')
