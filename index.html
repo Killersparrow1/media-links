@@ -537,6 +537,7 @@ function gk(t){try{return(t||'').replace(/[▪•★☆◆◇▶►▸→♥●�
 function esc(s){try{return encodeURIComponent(s)}catch(e){return encodeURIComponent(s.replace(/[\uD800-\uDFFF]/g,''))}}
 
 const KEY_MAP={ID:'id',Title:'title',Year:'year',Resolution:'resolution','File Size':'size',Codec:'codec','Audio Codec':'audio',Source:'source','Download URL':'url','TMDB ID':'tmdbId','Poster URL':'poster',Overview:'overview',Genre:'genre',Rating:'rating','Date Added':'dateAdded',Watched:'watched',Notes:'notes',Type:'type',Season:'season',Episode:'episode'};
+const TEXT_FIELDS=['id','title','year','resolution','size','codec','audio','source','url','tmdbId','poster','overview','genre','rating','dateAdded','watched','notes','type','season','episode','hdr','atmos','group','_groupKey'];
 
 function normalizeKeys(obj){
   const n={};
@@ -545,7 +546,12 @@ function normalizeKeys(obj){
     if(mapped)n[mapped]=v;
     else n[k]=v;
   });
+  TEXT_FIELDS.forEach(k=>{
+    if(n[k]===undefined||n[k]===null)n[k]='';
+    else n[k]=String(n[k]);
+  });
   n.id=n.id||Date.now().toString(36);
+  n._groupKey=n._groupKey||gk(n.title);
   return n;
 }
 
@@ -572,11 +578,6 @@ function setGroupPoster(groupKey,rawKey){
   });
   if(count){
   localStorage.setItem('mlinks',JSON.stringify(links));
-  if(TMDB_KEY&&synced>0){
-    const btn=document.getElementById('fillTmdbBtn');
-    if(btn)btn.disabled=false;
-    fillAllTMDB();
-  }
   render();
     toast(`✅ Poster set for ${count} links`,'success');
   }
@@ -769,10 +770,10 @@ async function fillAllTMDB(){
   if(!key){toast('Add your TMDB key in Settings first','error');return}
   const groups={};
   links.forEach(l=>{
-    const gk=l._groupKey||gk(l.title);
+    const groupKey=l._groupKey||gk(l.title);
     if(!l.tmdbId&&(l.title||l.year)){
-      if(!groups[gk])groups[gk]=[];
-      groups[gk].push(l);
+      if(!groups[groupKey])groups[groupKey]=[];
+      groups[groupKey].push(l);
     }
   });
   const entries=Object.entries(groups);
@@ -910,8 +911,8 @@ async function bulkImport(){
   if(TMDB_KEY&&synced>0){
     const groups={};
     newParsed.forEach(l=>{
-      const gk=l._groupKey||gk(l.title);
-      if(!l.tmdbId&&(l.title||l.year)){if(!groups[gk])groups[gk]=[];groups[gk].push(l)}
+      const groupKey=l._groupKey||gk(l.title);
+      if(!l.tmdbId&&(l.title||l.year)){if(!groups[groupKey])groups[groupKey]=[];groups[groupKey].push(l)}
     });
     for(const [gk,items] of Object.entries(groups)){
       const first=items[0];
