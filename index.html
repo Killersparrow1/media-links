@@ -912,6 +912,7 @@ function doMerge(fromGroupKey,fromRawKey){
   const targetYear=targetItems[0].year||'';
   const newGroupKey=((targetTitle||'')+' '+(targetYear||'')).toLowerCase().replace(/\s+/g,' ').trim();
   let moved=0;
+  const toSync=[];
   links.forEach(l=>{
     const lk=l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
     if(lk===fromRawKey){
@@ -919,11 +920,17 @@ function doMerge(fromGroupKey,fromRawKey){
       l.year=targetYear;
       l._groupKey=newGroupKey;
       moved++;
+      toSync.push(l);
     }
   });
   localStorage.setItem('mlinks',JSON.stringify(links));
+  // sync to cloud
+  if(admin&&toSync.length){
+    (async()=>{for(const l of toSync){await deleteFromSheet(l.id);await saveToSheet(l)}})();
+  }
   render();
-  toast(`✅ Merged ${moved} links into "${targetTitle}"`,'success');
+  const cloudMsg=admin?` and synced to cloud`:'';
+  toast(`✅ Merged ${moved} links into "${targetTitle}"${cloudMsg}`,'success');
 }
 
 function linkBadges(l){
