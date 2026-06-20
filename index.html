@@ -814,7 +814,7 @@ async function fillAllTMDB(){
   toast(`✅ Filled ${done} groups`,'success');
 }
 
-async function cleanAllTitles(){
+function cleanAllTitles(){
   if(!admin){toast('Admin only','error');return}
   const btn=document.getElementById('cleanTitlesBtn');
   if(!btn)return;
@@ -836,8 +836,6 @@ async function cleanAllTitles(){
       if(t!==old){
         l.title=t;
         l._groupKey=gk(t);
-        await deleteFromSheet(l.id);
-        await saveToSheet(l);
         changed++;
         btn.textContent=`🧹 ${changed}`;
       }
