@@ -113,6 +113,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,sans-s
 .btn-share:hover{opacity:1;color:#C0392B;background:rgba(192,57,43,.08)}
 .btn-merge{background:none;border:none;color:#6b7280;cursor:pointer;font-size:15px;padding:4px;opacity:.4;transition:opacity .2s;border-radius:3px;line-height:1}
 .btn-merge:hover{opacity:1;color:#16a34a;background:rgba(22,163,74,.1)}
+.btn-poster{background:none;border:none;color:#6b7280;cursor:pointer;font-size:14px;padding:4px;opacity:.4;transition:opacity .2s;border-radius:3px;line-height:1}
+.btn-poster:hover{opacity:1;color:#2563eb;background:rgba(37,99,235,.1)}
 .merge-panel{display:none;padding:8px 14px;border-top:1px solid #e5e7eb;gap:8px;align-items:center}
 .merge-panel.open{display:flex}
 .merge-panel select{padding:4px 8px;border:1px solid #d1d5db;border-radius:3px;font-size:12px;flex:1;background:#fff;color:#1a1a1a;outline:none}
@@ -545,6 +547,25 @@ function shareGroup(key){
   });
 }
 
+function setGroupPoster(groupKey,rawKey){
+  const url=prompt('Paste poster image URL:');
+  if(!url)return;
+  let count=0;
+  links.forEach(l=>{
+    const lk=l._groupKey||((l.title||'')+' '+(l.year||'')).toLowerCase().replace(/\s+/g,' ').trim();
+    if(lk===rawKey){
+      l.poster=url;
+      count++;
+      if(admin){deleteFromSheet(l.id);saveToSheet(l)}
+    }
+  });
+  if(count){
+    localStorage.setItem('mlinks',JSON.stringify(links));
+    render();
+    toast(`✅ Poster set for ${count} links`,'success');
+  }
+}
+
 async function init(){
   loadConfig();
   loading(true);
@@ -913,6 +934,7 @@ function renderGrouped(items,grid){
           </div>
           <div class="group-count">${items.length}</div>
           <button class="btn-share" onclick="event.stopPropagation();shareGroup('${encodeURIComponent(key)}')" title="Share this group">🔗</button>
+          <button class="btn-poster admin-only" onclick="event.stopPropagation();setGroupPoster('${groupKey}','${key.replace(/"/g,'\\"')}')" title="Set poster URL">🖼</button>
           <button class="btn-merge admin-only" onclick="event.stopPropagation();toggleMerge('${groupKey}')" title="Merge into another group">⊕</button>
           <div class="group-expand" id="gexp_${groupKey}">▾</div>
         </div>
