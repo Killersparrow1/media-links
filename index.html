@@ -533,7 +533,7 @@ function parseFilename(name){
   };
 }
 
-function gk(t){return(t||'').replace(/[▪•★☆◆◇▶►▸→♥●◎✦❖▪▫■□●○◎⚠️⭐🌟✨🔥💥🎬🎥📽️📺🖥💻⌨️🖱️🕹️🎮🎧📱]/g,'').replace(/\p{Extended_Pictographic}/gu,'').toLowerCase().replace(/\s+/g,' ').trim()}
+function gk(t){try{return(t||'').replace(/[▪•★☆◆◇▶►▸→♥●◎✦❖▪▫■□●○◎⚠️⭐🌟✨🔥💥🎬🎥📽️📺🖥💻⌨️🖱️🕹️🎮🎧📱]/g,'').replace(/\p{Extended_Pictographic}/gu,'').toLowerCase().replace(/\s+/g,' ').trim()}catch(e){return(t||'').toLowerCase().replace(/\s+/g,' ').trim()}}
 
 const KEY_MAP={ID:'id',Title:'title',Year:'year',Resolution:'resolution','File Size':'size',Codec:'codec','Audio Codec':'audio',Source:'source','Download URL':'url','TMDB ID':'tmdbId','Poster URL':'poster',Overview:'overview',Genre:'genre',Rating:'rating','Date Added':'dateAdded',Watched:'watched',Notes:'notes',Type:'type',Season:'season',Episode:'episode'};
 
