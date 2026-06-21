@@ -1307,7 +1307,7 @@ function importData(e){
         const data=JSON.parse(ev.target.result);
         if(!Array.isArray(data))throw new Error('Not an array');
         addLinks(data);
-      }catch(err){toast('Invalid JSON file','error')}
+      }catch(err){toast('JSON error: '+err.message,'error')}
     };
     reader.readAsText(file);
   }else if(ext==='xlsx'){
