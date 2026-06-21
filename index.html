@@ -189,7 +189,7 @@ body:not(.admin) [onclick*="deleteLink"]{display:none!important}
       <button class="btn btn-outline btn-sm admin-only" onclick="fillAllTMDB()" id="fillTmdbBtn">🖼 Fill TMDB</button>
       <button class="btn btn-outline btn-sm admin-only" onclick="cleanAllTitles()" id="cleanTitlesBtn">🧹 Clean Titles</button>
       <button class="btn-lock" id="lockBtn" onclick="toggleAdmin()" title="Admin access">🔒</button>
-      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      <input type="file" id="importFile" accept=".json,.xlsx" style="display:none" onchange="importData(event)">
     </div>
   </div>
 
@@ -378,6 +378,7 @@ body:not(.admin) [onclick*="deleteLink"]{display:none!important}
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <script>
 let API_URL = '';
 let TMDB_KEY = '';
@@ -461,7 +462,7 @@ function parseFilename(name){
   const yearMatch=name.match(/\b(19\d{2}|20\d{2})\b/);
   const hdrMatch=name.match(/\b(DV|HDR10\+?|HDR|DolbyVision|HLG)\b/i);
   const atmosMatch=name.match(/\bAtmos\b/i);
-  const sourceMatch=name.match(/\b(NF|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV|WEB)\b/i);
+  const sourceMatch=name.match(/\b(NF|AMZN|HULU|DSNP|iTunes|FAND|MA|JHS|HS|AHA|AMZ|AH|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV|WEB)\b/i);
   const groupMatch=name.match(/-([\w.]+)\.(mkv|mp4|avi|mov)$/i);
   const seasonEpMatch=name.match(/\bS(\d+)\s*E(\d+)\b/i)||name.match(/\bS(\d+)\.E(\d+)\b/i);
   const seasonMatch=name.match(/\bS(\d+)\b(?!\s*E)/i)||name.match(/\bSeason\s*(\d+)\b/i);
@@ -480,23 +481,48 @@ function parseFilename(name){
     .replace(/\[[\d.]+\s*(GB|MB)\]\s*/g,'')
     .replace(/\b(2160p|1080p|720p|576p|480p|4K)\b/gi,'')
     .replace(/\b(H\.?265|H\.?264|AV1|x265|x264|HEVC|AVC)\b/gi,'')
-    .replace(/\b(AAC|DDPA?\d*\.?\d*|AC3|EAC3|FLAC|DTS|TrueHD)\b/gi,'')
-    .replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|NF|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
-    .replace(/\b(DV|HDR10\+?|HDR|DolbyVision|HLG)\b/gi,'')
+    .replace(/\b(AAC|DDPA?\d*\.?\d*|AC3|EAC3|FLAC|DTS|TrueHD|Opus|MP3|Vorbis)\b/gi,'')
+    .replace(/\b(AAC|DD|DDP|AC3|EAC3|FLAC|DTS|TrueHD|Opus)\s*\d+\s+\d+\b/gi,'')
+    .replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iTunes|FAND|MA|JHS|HS|AHA|AMZ|AH|NF|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV|WEB|HMAX|SNXT|ATVP|ZEE5|JIO[HS]?|HOTSTAR)\b/gi,'')
+    .replace(/\bHDR10[P+]?\b/gi,'')
+    .replace(/\bHDR\s*10\+?\s*/gi,'')
+    .replace(/\b(DoVi|DVHDR|DV|HDR|DolbyVision|HLG|PQ10|SDR)\b/gi,'')
     .replace(/\bAtmos\b/gi,'')
     .replace(/\bMULTI\b/gi,'')
     .replace(/\bDUAL\b/gi,'')
     .replace(/\bAUDIO\b/gi,'')
+    .replace(/\b(SUBSCRIBED?|SUBBED?|DUBBED?)\b/gi,'')
+    .replace(/\b(REMUX|ENCODE|UPSCALE|HYBRID|COMPLETE|FINAL|LIMITED)\b/gi,'')
+    .replace(/\b(UNRATED|EXTENDED|THEATRICAL|DIRECTOR[`']?S\s*CUT|UNCUT|UNCENSORED|RETAIL)\b/gi,'')
+    .replace(/\b(READ\s*NFO|INCLUDED?|FIX)\b/gi,'')
+    .replace(/\b(BluRay|BDRip|BRRip|HDTV|PDTV|DSR|SATRip|TVRip|DVBRip|WEBCap|HC|HDRip)\b/gi,'')
+    .replace(/\b(REMASTERED|RESTORED|REPACK2?)\b/gi,'')
+    .replace(/\bIMAX\b/gi,'')
+    .replace(/\b(ESub|ESubs|MSubs|SUBS)\b/gi,'')
+    .replace(/\bDD\+?\b/gi,'')
+    .replace(/\b(DS4K|60FPS|HFR|UHD|FHD|HQ)\b/gi,'')
+    .replace(/\b(NmCT|PMTP|PCOK|STG|WAVES|Telly|SupplyGang|SM|UPLAY|KONE|KABLE|UJKS|MMX|SONYLIV|LRTX|MMAX|ETHEL|DaddyCooL|YAMRAAJ|PrimeFix|FraMeSToR|GDTOT|Frid?ay4KPopcorn|4kHdHub)\b/gi,'')
+    .replace(/\b(APeX|BYNDR|DUDU|FNDG|FLUX|BiTOR|CRAV|HONE|CORE|MGMP|CMZy|KLiKK|CtrlHD|PsiX|VSL)\b/gi,'')
+    .replace(/\?\?\?\s*[\w]*/gi,'')
+    .replace(/\b(Hindi|Tamil|Telugu|Malayalam|Kannada|Bangla|Bengali|Punjabi|Gujarati|Marathi|Urdu)\b/gi,'')
     .replace(/\(.*?\)/g,'')
     .replace(/\[.*?\]/g,'')
+    .replace(/\{[^}]*\}/g,'')
+    .replace(/\s*\+\s*/g,' ')
+    .replace(/\|/g,' ')
+    .replace(/[~`]/g,'')
+    .replace(/[∆–]/g,'')
     .replace(/\b(19\d{2}|20\d{2})\b/g,'')
     .replace(/\bS(\d+)\s*E(\d+)\b/gi,'')
     .replace(/\bS(\d+)\b(?!\s*E)/gi,'')
     .replace(/\bSeason\s*(\d+)\b/gi,'')
     .replace(/\bE(\d+)\b/gi,'')
     .replace(/\bEpisode\s*(\d+)\b/gi,'')
-    .replace(/\b(10bit|8bit|REPACK|PROPER|iNTERNAL)\b/gi,'')
+    .replace(/\b(10bit|8bit|10-BIT|8-BIT|REPACK|PROPER|iNTERNAL|INTERNAL)\b/gi,'')
     .replace(/\b(RIP|BY|for)\b/gi,'')
+    .replace(/\b\d+\.\d+\b/g,'')
+    .replace(/\b\d+\s*(?:KB|MB|GB)\b/gi,'')
+    .replace(/\b(mkv|mp4|avi|mov|zip|rar|7z)\b/gi,'')
     .replace(/#\w+/g,'')
     .replace(/[▪•★☆◆◇▶►▸→♥●◎✦❖▪▫■□●○◎⚠️⭐🌟✨🔥💥🎬🎥📽️📺🖥💻⌨️🖱️🕹️🎮🎧📱]/g,'')
     .replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}]/gu,'')
@@ -506,8 +532,6 @@ function parseFilename(name){
     .replace(/[_-]+/g,' ')
     .replace(/\s+/g,' ').trim()
     .replace(/\s+([,;:])/g,'$1')
-    .replace(/^\d{1,2}\s+/,'')
-    .replace(/\s+/g,' ').trim()
     .replace(/\s+/g,' ').trim();
 
   const hdr=hdrMatch?hdrMatch[1].toUpperCase().replace('DOLBYVISION','DV'):'';
@@ -825,7 +849,7 @@ function cleanAllTitles(){
   for(const l of links){
     const old=l.title;
     let t=l.title||'';
-    t=t.replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iT|FAND|MA|JHS|HS|AHA|AMZ|AH|NF|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
+    t=t.replace(/\b(NF\s*WEB\s*DL|AMZN|HULU|DSNP|iTunes|FAND|MA|JHS|HS|AHA|AMZ|AH|NF|WEB-DL|WEBRip|BLURAY|BRRIP|DVDRip|HDTV)\b/gi,'')
      .replace(/\(.*?\)/g,'').replace(/\[.*?\]/g,'')
      .replace(/\b(10bit|8bit|REPACK|PROPER|iNTERNAL)\b/gi,'')
      .replace(/\b(RIP|BY|for)\b/gi,'').replace(/#\w+/g,'')
@@ -1251,18 +1275,49 @@ function importData(e){
   if(!admin)return;
   const file=e.target.files[0];
   if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    try{
-      const data=JSON.parse(ev.target.result);
-      if(!Array.isArray(data))throw new Error('Not an array');
-      links=[...data,...links];
-      localStorage.setItem('mlinks',JSON.stringify(links));
-      render();
-      toast(`✅ Imported ${data.length} links`,'success');
-    }catch(err){toast('Invalid JSON file','error')}
+  const ext=file.name.split('.').pop().toLowerCase();
+  const addLinks=data=>{
+    const mapped=data.map(normalizeKeys);
+    links=[...mapped,...links];
+    localStorage.setItem('mlinks',JSON.stringify(links));
+    render();
+    toast(`✅ Imported ${data.length} links`,'success');
   };
-  reader.readAsText(file);
+  if(ext==='json'){
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(!Array.isArray(data))throw new Error('Not an array');
+        addLinks(data);
+      }catch(err){toast('Invalid JSON file','error')}
+    };
+    reader.readAsText(file);
+  }else if(ext==='xlsx'){
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const wb=XLSX.read(ev.target.result,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+        if(rows.length<2)throw new Error('No data rows');
+        const headers=rows[0].map(h=>String(h).trim());
+        const data=rows.slice(1).map(row=>{
+          const obj={};
+          headers.forEach((h,i)=>{
+            const val=row[i];
+            if(val!==undefined&&val!==null)obj[h]=String(val).trim();
+          });
+          return obj;
+        });
+        if(!data.length)throw new Error('No rows found');
+        addLinks(data);
+      }catch(err){toast('Import error: '+err.message,'error')}
+    };
+    reader.readAsArrayBuffer(file);
+  }else{
+    toast('Unsupported file type. Use .json or .xlsx','error');
+  }
   e.target.value='';
 }
 
