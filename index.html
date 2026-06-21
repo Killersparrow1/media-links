@@ -210,28 +210,28 @@ body:not(.admin) [onclick*="deleteLink"]{display:none!important}
   <div class="controls">
     <div class="search-wrap">
       <span class="icon">🔍</span>
-      <input type="text" id="searchInput" placeholder="Search by title or overview..." oninput="render()">
+      <input type="text" id="searchInput" placeholder="Search by title or overview..." oninput="debounceRender()">
     </div>
     <div class="filter-group">
-      <select id="filterResolution" onchange="render()">
+      <select id="filterResolution" onchange="debounceRender()">
         <option value="">All Resolutions</option>
         <option value="2160p">2160p (4K)</option>
         <option value="1080p">1080p</option>
         <option value="720p">720p</option>
       </select>
-      <select id="filterCodec" onchange="render()">
+      <select id="filterCodec" onchange="debounceRender()">
         <option value="">All Codecs</option>
         <option value="H.265">H.265</option>
         <option value="H.264">H.264</option>
         <option value="AV1">AV1</option>
       </select>
-      <select id="filterType" onchange="render()">
+      <select id="filterType" onchange="debounceRender()">
         <option value="">All Types</option>
         <option value="Movie">Movies</option>
         <option value="TV">Series</option>
         <option value="Collection">Collections</option>
       </select>
-      <select id="filterSort" onchange="render()">
+      <select id="filterSort" onchange="debounceRender()">
         <option value="newest">Newest First</option>
         <option value="oldest">Oldest First</option>
         <option value="az">A-Z</option>
@@ -936,6 +936,9 @@ async function bulkImport(){
   }catch(e){toast('Import error: '+e.message,'error')}
 }
 
+let _renderTimer;
+function debounceRender(){clearTimeout(_renderTimer);_renderTimer=setTimeout(render,40);}
+
 function render(){
   const q=document.getElementById('searchInput').value.toLowerCase();
   const res=document.getElementById('filterResolution').value;
@@ -962,37 +965,12 @@ function render(){
     return;
   }
 
-  renderGrouped(filtered,grid);
+  const groupCount=renderGrouped(filtered,grid);
   updateStats();
-  renderPagination(filtered.length);
+  renderPagination(groupCount);
 }
 
-function renderFlat(items,grid){
-  const start=(page-1)*PER_PAGE;
-  const pageItems=items.slice(start,start+PER_PAGE);
-  grid.innerHTML=pageItems.map(l=>{
-    const poster=l.poster||'';
-    const imgHtml=poster?`<img class="card-img" src="${poster}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-img\\'>🎬</div>'">`:`<div class="card-img">🎬</div>`;
-    const yearHtml=l.year?`<div class="card-year">${l.year}</div>`:'';
-    const badges=linkBadges(l);
-    const overview=l.overview?`<div class="card-overview">${l.overview.slice(0,200)}${l.overview.length>200?'...':''}</div>`:'';
-    return `
-      <div class="card">
-        ${imgHtml}
-        <div class="card-body">
-          <div class="card-title">${l.title||'Unknown'}</div>
-          ${yearHtml}
-          <div class="card-badges">${badges.join('')}</div>
-          ${overview}
-          <div class="card-actions">
-            <a href="${l.url}" target="_blank" rel="noopener" class="btn btn-success btn-sm">⬇ Download</a>
-            <button class="btn btn-danger btn-sm" onclick="deleteLink('${l.id}')">✕</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
+
 
 function renderGrouped(items,grid){
   const groups={};
@@ -1006,33 +984,36 @@ function renderGrouped(items,grid){
     if(l.overview&&!overviewMap[key])overviewMap[key]=l.overview;
   });
 
-  const sorted=Object.entries(groups).sort((a,b)=>{
+  let sorted=Object.entries(groups).sort((a,b)=>{
     const tA=a[1][0].title||'',tB=b[1][0].title||'';
     return tA.localeCompare(tB);
   });
 
-  grid.innerHTML=sorted.map(([key,items])=>{
-    const first=items[0];
-    const poster=posterMap[key];
-    const overview=overviewMap[key];
-    const imgHtml=poster?`<img src="${poster}" alt="" onerror="this.parentElement.innerHTML='<div style=\\'width:50px;height:70px;background:#f3f4f6;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:20px\\'>🎬</div>'">`:`<div style="width:50px;height:70px;background:#f3f4f6;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:20px">🎬</div>`;
-    const groupKey=key.replace(/\s/g,'_');
-    const count2160=items.filter(i=>(i.resolution||'').includes('2160')).length;
-    const count1080=items.filter(i=>(i.resolution||'').includes('1080')).length;
-    const count720=items.filter(i=>(i.resolution||'').includes('720')).length;
-    const otherGroups=sorted.filter(([k])=>k!==key).map(([k])=>
-      `<option value="${k.replace(/"/g,'&quot;')}">${groups[k][0].title||'Unknown'}${groups[k][0].year?` (${groups[k][0].year})`:''}</option>`
-    ).join('');
+  const totalGroups=sorted.length;
+  const totalPages=Math.max(1,Math.ceil(totalGroups/PER_PAGE));
+  if(page>totalPages)page=totalPages;
+  const start=(page-1)*PER_PAGE;
+  sorted=sorted.slice(start,start+PER_PAGE);
 
-    return `
+  let html='';
+  for(const [key,groupItems] of sorted){
+    const first=groupItems[0];
+    const poster=posterMap[key];
+    const imgHtml=poster?`<img src="${poster}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\\'width:50px;height:70px;background:#f3f4f6;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:20px\\'>🎬</div>'">`:`<div style="width:50px;height:70px;background:#f3f4f6;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:20px">🎬</div>`;
+    const groupKey=key.replace(/\s/g,'_');
+    const count2160=groupItems.filter(i=>(i.resolution||'').includes('2160')).length;
+    const count1080=groupItems.filter(i=>(i.resolution||'').includes('1080')).length;
+    const count720=groupItems.filter(i=>(i.resolution||'').includes('720')).length;
+
+    html+=`
       <div class="card-grouped">
         <div class="group-header" onclick="toggleGroup('${groupKey}')">
           ${imgHtml}
           <div class="group-info">
             <h3>${first.title||'Unknown'}${first.year?` (${first.year})`:''}</h3>
-            <div class="group-meta">${items.length} links${first.type==='TV'?` <span class="pill pill-series">Series</span>`:''}${first.type==='Collection'?` <span class="pill pill-series">Collection</span>`:''}${count2160?` <span class="pill pill-4k">4K</span>`:''}${count1080?` <span class="pill pill-1080p">1080p</span>`:''}${count720?` <span class="pill pill-720p">720p</span>`:''}</div>
+            <div class="group-meta">${groupItems.length} links${first.type==='TV'?` <span class="pill pill-series">Series</span>`:''}${first.type==='Collection'?` <span class="pill pill-series">Collection</span>`:''}${count2160?` <span class="pill pill-4k">4K</span>`:''}${count1080?` <span class="pill pill-1080p">1080p</span>`:''}${count720?` <span class="pill pill-720p">720p</span>`:''}</div>
           </div>
-          <div class="group-count">${items.length}</div>
+          <div class="group-count">${groupItems.length}</div>
           <button class="btn-share" onclick="event.stopPropagation();shareGroup('${esc(key)}')" title="Share this group">🔗</button>
           <button class="btn-poster admin-only" onclick="event.stopPropagation();setGroupPoster('${groupKey}','${key.replace(/"/g,'\\"')}')" title="Set poster URL">🖼</button>
           <button class="btn-merge admin-only" onclick="event.stopPropagation();toggleMerge('${groupKey}')" title="Merge into another group">⊕</button>
@@ -1040,33 +1021,46 @@ function renderGrouped(items,grid){
         </div>
         <div class="merge-panel" id="mrg_${groupKey}">
           <span style="font-size:12px;color:#666;white-space:nowrap">Merge into:</span>
-          <select id="msel_${groupKey}">${otherGroups||'<option value="">No other groups</option>'}</select>
-          <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();doMerge('${groupKey}','${key.replace(/"/g,'\\"')}')" ${otherGroups?'':'disabled'}>Merge</button>
+          <select id="msel_${groupKey}"></select>
+          <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();doMerge('${groupKey}','${key.replace(/"/g,'\\"')}')">Merge</button>
         </div>
-        <div class="group-variants" id="gvar_${groupKey}">
-          ${items.map(l=>{
-            const badges=linkBadges(l);
-            const seasonLabel=l.type==='TV'&&l.season?` <span class="badge badge-codec" style="background:#2980b9">S${l.season}${l.episode?'.E'+l.episode:''}</span>`:'';
-            const sizeLabel=l.size?` <span class="badge badge-size">${formatSize(l.size)}</span>`:'';
-            return `
-              <div class="variant">
-                <input type="checkbox" class="v-cb" ${selected.has(l.id)?'checked':''} onclick="event.stopPropagation();toggleSelectItem('${l.id}')">
-                <div class="v-badges">${seasonLabel}${badges.join(' ')}</div>
-                ${sizeLabel?`<span class="v-size">${formatSize(l.size)}</span>`:''}
-                <a href="${l.url}" target="_blank" rel="noopener" class="v-link">⬇</a>
-                <button class="v-del" style="${selectMode?'display:none':''}" onclick="event.stopPropagation();deleteLink('${l.id}')">✕</button>
-              </div>
-            `;
-          }).join('')}
-        </div>
+        <div class="group-variants" id="gvar_${groupKey}"></div>
       </div>
     `;
-  }).join('');
+  }
+
+  grid.innerHTML=html;
+  return totalGroups;
 }
 
 function toggleGroup(key){
   const v=document.getElementById('gvar_'+key);
   const e=document.getElementById('gexp_'+key);
+  if(!v._loaded){
+    v._loaded=1;
+    const rawKey=key.replace(/_/g,' ');
+    const groupItems=links.filter(l=>(l._groupKey||gk(l.title))===rawKey);
+    const mergeSel=document.getElementById('msel_'+key);
+    if(mergeSel){
+      const allKeys=[...new Set(links.map(l=>l._groupKey||gk(l.title)))].filter(k=>k!==rawKey).sort();
+      mergeSel.innerHTML=allKeys.length?allKeys.map(k=>`<option value="${k.replace(/"/g,'&quot;')}">${links.find(l=>(l._groupKey||gk(l.title))===k)?.title||k}</option>`).join(''):'<option value="">No other groups</option>';
+      mergeSel.nextElementSibling.disabled=!allKeys.length;
+    }
+    v.innerHTML=groupItems.map(l=>{
+      const badges=linkBadges(l);
+      const seasonLabel=l.type==='TV'&&l.season?` <span class="badge badge-codec" style="background:#2980b9">S${l.season}${l.episode?'.E'+l.episode:''}</span>`:'';
+      const sizeLabel=l.size?` <span class="badge badge-size">${formatSize(l.size)}</span>`:'';
+      return `
+        <div class="variant">
+          <input type="checkbox" class="v-cb" ${selected.has(l.id)?'checked':''} onclick="event.stopPropagation();toggleSelectItem('${l.id}')">
+          <div class="v-badges">${seasonLabel}${badges.join(' ')}</div>
+          ${sizeLabel?`<span class="v-size">${formatSize(l.size)}</span>`:''}
+          <a href="${l.url}" target="_blank" rel="noopener" class="v-link">⬇</a>
+          <button class="v-del" style="${selectMode?'display:none':''}" onclick="event.stopPropagation();deleteLink('${l.id}')">✕</button>
+        </div>
+      `;
+    }).join('');
+  }
   const open=v.classList.toggle('open');
   e.classList.toggle('open');
 }
@@ -1141,8 +1135,8 @@ function updateStats(){
   document.getElementById('statRes').textContent=links.filter(l=>(l.resolution||'').includes('2160')).length;
 }
 
-function renderPagination(total){
-  const pages=Math.max(1,Math.ceil(total/PER_PAGE));
+function renderPagination(groupCount){
+  const pages=Math.max(1,Math.ceil(groupCount/PER_PAGE));
   if(page>pages)page=pages;
   const pg=document.getElementById('pagination');
   if(pages<=1){pg.innerHTML='';return}

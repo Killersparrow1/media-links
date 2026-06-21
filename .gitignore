@@ -3,6 +3,7 @@ config.ini
 *.session-journal
 last_id.txt
 venv/
+output/
 telegram_fetch.py
 SETUP.md
 config.ini.template
