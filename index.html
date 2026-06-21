@@ -390,6 +390,7 @@ let selectedTmdb = null;
 let selectMode = false;
 let selected = new Set();
 let admin = localStorage.getItem('cfg_admin') === 'true';
+let cloudBlocked = false;
 const ADMIN_HASH = '93af62d6e0ac59149247a28e6bd575e4c0ed50cd2c3406445f7817bc809abc3a';
 
 async function toggleAdmin(){
@@ -622,8 +623,13 @@ async function init(){
 
   try{
     const r=await fetch(API_URL+'?action=getAll');
-    if(r.ok){
-      const data=await r.json();
+    const body=await r.text();
+    if(body.toLowerCase().includes('quota')){
+      cloudBlocked=true;
+      toast('⚠️ Cloud quota exceeded — using local data only','warn');
+    }else if(r.ok){
+      let data;
+      try{data=JSON.parse(body)}catch(e){data=null}
       let loaded=null;
       if(data&&data.success===true&&data.data){
         loaded=data.data.length>0?data.data.map(normalizeKeys):null;
@@ -641,7 +647,7 @@ async function init(){
     toast('⚠️ Cloud unreachable. Open Settings to authorize.','error');
   }
   // push any local-only items to cloud (admin only)
-  if(admin&&API_URL&&links.length>0){
+  if(admin&&API_URL&&!cloudBlocked&&links.length>0){
     fetch(API_URL+'?action=getAll').then(r=>r.json()).then(d=>{
       const cloudIds=new Set((d.data||[]).map(r=>r.ID||r.id));
       links.forEach(l=>{
@@ -661,7 +667,7 @@ async function init(){
 }
 
 async function saveToSheet(link){
-  if(!admin||!API_URL)return false;
+  if(!admin||!API_URL||cloudBlocked)return false;
   try{
     const r=await fetch(API_URL,{
       method:'POST',
@@ -669,15 +675,26 @@ async function saveToSheet(link){
       headers:{'Content-Type':'text/plain'}
     });
     const text=await r.text();
+    if(text.toLowerCase().includes('quota')){
+      cloudBlocked=true;
+      toast('⚠️ Cloud quota exceeded — edits saved locally only','warn');
+      return false;
+    }
     try{const data=JSON.parse(text);return data.success!==false}
     catch(e){return text.length>0}
   }catch(e){return false}
 }
 
 async function deleteFromSheet(id){
-  if(!admin||!API_URL)return false;
+  if(!admin||!API_URL||cloudBlocked)return false;
   try{
     const r=await fetch(API_URL+'?action=delete&id='+esc(id));
+    const text=await r.text();
+    if(text.toLowerCase().includes('quota')){
+      cloudBlocked=true;
+      toast('⚠️ Cloud quota exceeded — deletions saved locally only','warn');
+      return false;
+    }
     return r.ok;
   }catch(e){return false}
 }
